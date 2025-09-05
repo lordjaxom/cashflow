@@ -39,7 +39,9 @@ class CalculateService(
                             amount = it.amount,
                             balance = currentBalance,
                             name = it.name ?: it.rule!!.name,
-                            type = it.type
+                            type = it.type,
+                            entry = it,
+                            rule = null
                         )
                     )
                 }
@@ -55,7 +57,9 @@ class CalculateService(
                                 amount = it.amount,
                                 balance = currentBalance,
                                 name = it.name,
-                                type = it.type
+                                type = it.type,
+                                entry = null,
+                                rule = it
                             )
                         )
                     }
@@ -99,4 +103,6 @@ class Calculation(
     val balance: BigDecimal,
     val name: String,
     val type: EntryType,
+    val entry: Entry?,
+    val rule: Rule?
 )
