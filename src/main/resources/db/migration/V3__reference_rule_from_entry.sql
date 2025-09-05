@@ -1,0 +1,5 @@
+ALTER TABLE entry
+    ADD rule_id UUID;
+
+ALTER TABLE entry
+    ADD CONSTRAINT FK_ENTRY_ON_RULE FOREIGN KEY (rule_id) REFERENCES rule (id);
