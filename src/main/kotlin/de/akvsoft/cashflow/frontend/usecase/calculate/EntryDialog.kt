@@ -8,6 +8,7 @@ import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.component.formlayout.FormLayout
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.textfield.BigDecimalField
+import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.data.binder.Binder
 import com.vaadin.flow.data.binder.ValidationException
 import com.vaadin.flow.data.provider.ListDataProvider
@@ -24,6 +25,9 @@ class EntryDialog(
 
     private val binder = Binder(Entry::class.java)
 
+    private val name = TextField("Name").apply {
+        isRequiredIndicatorVisible = true
+    }
     private val date = DatePicker("Datum").apply {
         isRequiredIndicatorVisible = true
         value = LocalDate.now()
@@ -44,15 +48,18 @@ class EntryDialog(
         headerTitle = "Eintrag"
 
         val form = FormLayout().apply {
-            add(date, amount, type)
+            add(name, date, amount, type)
             setResponsiveSteps(
                 FormLayout.ResponsiveStep("0", 1),
                 FormLayout.ResponsiveStep("600px", 2)
             )
-            setColspan(amount, 2)
+            setColspan(name, 2)
         }
         add(form)
 
+        binder.forField(name)
+            .asRequired("Name ist erforderlich")
+            .bind("name")
         binder.forField(date)
             .asRequired("Datum ist erforderlich")
             .withValidator(DateRangeValidator("Datum darf nicht in der fernen Vergangenheit liegen", LocalDate.of(1970,1,1), null))
@@ -89,4 +96,3 @@ class EntryDialog(
         open()
     }
 }
-
