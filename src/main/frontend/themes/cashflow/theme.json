@@ -3,6 +3,7 @@
     "typography",
     "color",
     "spacing",
-    "utility"
+    "utility",
+    "badge"
   ]
 }

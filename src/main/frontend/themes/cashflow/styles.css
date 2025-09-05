@@ -11,8 +11,19 @@ vaadin-grid::part(align-end) {
     text-align: end;
     justify-content: flex-end;
 }
+
 vaadin-grid::part(negative) {
     color: var(--lumo-error-text-color);
+}
+
+vaadin-grid::part(details-cell),
+vaadin-grid::part(details) {
+    background: var(--lumo-contrast-20pct);
+}
+
+vaadin-grid::part(details-cell),
+vaadin-grid::part(details) {
+    padding: 0 !important;
 }
 
 .alert {
