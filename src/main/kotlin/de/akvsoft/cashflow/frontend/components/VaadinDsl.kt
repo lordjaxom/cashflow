@@ -8,10 +8,6 @@ import com.vaadin.flow.component.ItemLabelGenerator
 import com.vaadin.flow.component.combobox.ComboBox
 import com.vaadin.flow.component.dialog.Dialog
 import com.vaadin.flow.dom.Element
-import kotlin.also
-import kotlin.collections.plusAssign
-import kotlin.collections.toTypedArray
-import kotlin.contracts.ContractBuilder
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract

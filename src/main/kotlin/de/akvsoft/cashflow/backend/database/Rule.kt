@@ -17,7 +17,7 @@ class Rule(
     @Column(nullable = false)
     var type: EntryType,
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "DECIMAL(18,2)")
     var amount: BigDecimal,
 
     @Column(name = "start_", nullable = false)

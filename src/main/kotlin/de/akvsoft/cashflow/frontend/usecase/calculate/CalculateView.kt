@@ -3,7 +3,6 @@ package de.akvsoft.cashflow.frontend.usecase.calculate
 import com.vaadin.flow.component.datepicker.DatePicker
 import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.grid.GridVariant
-import com.vaadin.flow.component.grid.ColumnTextAlign
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.data.provider.ListDataProvider
@@ -56,22 +55,30 @@ class CalculateView(
 
             textColumn({ it.date.formatDate() }) {
                 setHeader("Datum")
-                isAutoWidth = true
+                width = "120px"
                 flexGrow = 0
             }
-             textColumn({ it.amount.formatCurrency() }) {
+            textColumn({ it.amount.formatCurrency() }) {
                 setHeader("Betrag")
-                isAutoWidth = true
+                width = "120px"
                 flexGrow = 0
-                textAlign = ColumnTextAlign.END
-                setPartNameGenerator { item -> if (item.amount < BigDecimal.ZERO) "negative" else null }
+                setPartNameGenerator {
+                    buildString {
+                        append("align-end")
+                        if (it.amount < BigDecimal.ZERO) append(" negative")
+                    }
+                }
             }
             textColumn({ it.balance.formatCurrency() }) {
                 setHeader("Saldo")
-                isAutoWidth = true
+                width = "120px"
                 flexGrow = 0
-                textAlign = ColumnTextAlign.END
-                setPartNameGenerator { item -> if (item.balance < BigDecimal.ZERO) "negative" else null }
+                setPartNameGenerator {
+                    buildString {
+                        append("align-end")
+                        if (it.balance < BigDecimal.ZERO) append(" negative")
+                    }
+                }
             }
             textColumn(Calculation::name) {
                 setHeader("Name")
@@ -79,7 +86,7 @@ class CalculateView(
             }
             textColumn({ it.type.toDisplayString() }) {
                 setHeader("Typ")
-                isAutoWidth = true
+                width = "100px"
                 flexGrow = 0
             }
         }

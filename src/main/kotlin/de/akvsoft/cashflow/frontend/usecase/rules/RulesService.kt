@@ -21,8 +21,7 @@ class RulesService(
         end = null,
         schedule = Schedule(
             frequency = ScheduleFrequency.MONTH,
-            interval = 1,
-            dayOfMonth = 1
+            interval = 1
         )
     )
 
@@ -36,7 +35,7 @@ class RulesService(
             ScheduleFrequency.MONTH -> "Monat"
             ScheduleFrequency.YEAR -> "Jahr"
         }
-        val every = if (s.interval <= 1) "jeden" else "alle ${s.interval}."
-        return "$every $freq(e), Tag ${rule.start.dayOfMonth}"
+        val every = if (s.interval <= 1) "jeden" else "alle ${s.interval}"
+        return "$every $freq(e)"
     }
 }

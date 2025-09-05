@@ -12,6 +12,8 @@ import de.akvsoft.cashflow.frontend.components.grid
 import de.akvsoft.cashflow.frontend.components.grid.textColumn
 import de.akvsoft.cashflow.frontend.components.horizontalLayout
 import de.akvsoft.cashflow.frontend.util.formatCurrency
+import de.akvsoft.cashflow.frontend.util.formatDate
+import java.math.BigDecimal
 
 @Route("rules")
 class RulesView(
@@ -44,20 +46,38 @@ class RulesView(
 
             textColumn(Rule::name) {
                 setHeader("Name")
-                isAutoWidth = true
                 flexGrow = 1
             }
-            textColumn({  it.type.toDisplayString() }) {
+            textColumn( {  it.type.toDisplayString() }) {
                 setHeader("Typ")
+                width = "100px"
+                flexGrow = 0
             }
-            textColumn({ it.amount.formatCurrency() }) {
+            textColumn( { it.amount.formatCurrency() }) {
                 setHeader("Betrag")
-                isAutoWidth = true
+                setPartNameGenerator {
+                    buildString {
+                        append("align-end")
+                        if (it.amount < BigDecimal.ZERO) append(" negative")
+                    }
+                }
+                width = "120px"
+                flexGrow = 0
+            }
+            textColumn( { it.start.formatDate()}) {
+                setHeader("Beginn")
+                width = "120px"
+                flexGrow = 0
+            }
+            textColumn( { it.end?.formatDate()}) {
+                setHeader("Ende")
+                width = "120px"
+                flexGrow = 0
             }
             textColumn({ service.scheduleLabel(it) }) {
                 setHeader("Zeitplan")
-                isAutoWidth = true
-                flexGrow = 1
+                width = "300px"
+                flexGrow = 0
             }
 
             addItemDoubleClickListener { event ->

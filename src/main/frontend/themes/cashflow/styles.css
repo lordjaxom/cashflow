@@ -1,0 +1,16 @@
+html {
+    --vaadin-grid-cell-padding: 4px 8px;
+}
+
+vaadin-grid::part(header-cell) {
+    font-weight: bold;
+    min-height: var(--lumo-size-m);
+}
+
+vaadin-grid::part(align-end) {
+    text-align: end;
+    justify-content: flex-end;
+}
+vaadin-grid::part(negative) {
+    color: var(--lumo-error-text-color);
+}

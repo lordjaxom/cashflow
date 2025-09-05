@@ -17,9 +17,6 @@ class Schedule(
     @Column(name="interval_", nullable = false)
     var interval: Int,
 
-    @Column(nullable = false)
-    var dayOfMonth: Int, // TODO: unnecessary
-
     @Id
     val id: UUID = UUID.randomUUID()
 )

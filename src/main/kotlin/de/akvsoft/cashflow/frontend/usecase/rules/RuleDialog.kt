@@ -56,10 +56,6 @@ class RuleDialog(
         min = 1; value = 1
         helperText = "1 = jeden, 2 = alle 2., ..."
     }
-    private val dayOfMonth = IntegerField("Tag im Monat").apply {
-        min = 1; max = 31; value = 1
-        helperText = "1-31 (empfohlen: 1-28)"
-    }
 
     private var current: Rule? = null
 
@@ -68,7 +64,7 @@ class RuleDialog(
 
         // Form
         val form = FormLayout().apply {
-            add(name, type, amount, start, end, frequency, interval, dayOfMonth)
+            add(name, type, amount, start, end, frequency, interval)
             setResponsiveSteps(
                 FormLayout.ResponsiveStep("0", 1),
                 FormLayout.ResponsiveStep("600px", 2)
@@ -91,9 +87,6 @@ class RuleDialog(
         binder.forField(interval)
             .withValidator(IntegerRangeValidator("Intervall muss >= 1 sein", 1, null))
             .bind("schedule.interval")
-        binder.forField(dayOfMonth)
-            .withValidator(IntegerRangeValidator("Tag muss zwischen 1 und 31 sein", 1, 31))
-            .bind("schedule.dayOfMonth")
 
         start.addValueChangeListener { binder.validate() }
 

@@ -4,6 +4,7 @@ package de.akvsoft.cashflow.frontend.components.grid
 
 import com.vaadin.flow.component.Component
 import com.vaadin.flow.component.grid.Grid
+import com.vaadin.flow.data.renderer.LitRenderer
 import de.akvsoft.cashflow.frontend.components.VaadinDsl
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind

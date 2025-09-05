@@ -13,7 +13,7 @@ class Entry(
     @Column(nullable = false)
     var date: LocalDate,
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "DECIMAL(18,2)")
     var amount: BigDecimal,
 
     @Column(nullable = false)
