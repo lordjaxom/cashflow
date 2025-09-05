@@ -15,6 +15,7 @@ import com.vaadin.flow.data.provider.ListDataProvider
 import com.vaadin.flow.data.validator.DateRangeValidator
 import de.akvsoft.cashflow.backend.database.Entry
 import de.akvsoft.cashflow.backend.database.EntryType
+import de.akvsoft.cashflow.backend.database.Rule
 import de.akvsoft.cashflow.backend.database.toDisplayString
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -91,6 +92,25 @@ class EntryDialog(
     }
 
     fun open(entry: Entry) {
+        // Standard: Eingabefelder normal editierbar
+        name.isReadOnly = false
+        date.isReadOnly = false
+        this.current = entry
+        binder.readBean(entry)
+        open()
+    }
+
+    fun openForRule(rule: Rule, onDate: LocalDate) {
+        // Name/Datum von Rule/CalculateEntry vorgeben und sperren; Typ/Betrag bleiben editierbar
+        val entry = Entry(
+            date = onDate,
+            amount = rule.amount,
+            type = rule.type,
+            rule = null,
+            name = rule.name
+        )
+        name.isReadOnly = true
+        date.isReadOnly = true
         this.current = entry
         binder.readBean(entry)
         open()

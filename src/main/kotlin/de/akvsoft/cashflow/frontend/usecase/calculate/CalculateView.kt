@@ -89,6 +89,18 @@ class CalculateView(
                 width = "100px"
                 flexGrow = 0
             }
+
+            addItemDoubleClickListener { event ->
+                val item = event.item
+                val rule = item.rule
+                if (rule != null) {
+                    EntryDialog { entry ->
+                        entry.rule = rule
+                        service.saveEntry(entry)
+                        calculate()
+                    }.openForRule(rule, item.date)
+                }
+            }
         }
         calculate()
     }
