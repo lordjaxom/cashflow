@@ -41,7 +41,7 @@ class CalculateService(
                             name = it.name ?: it.rule!!.name,
                             type = it.type,
                             entry = it,
-                            rule = null
+                            rule = it.rule
                         )
                     )
                 }

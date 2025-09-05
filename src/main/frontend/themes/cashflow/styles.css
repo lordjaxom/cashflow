@@ -14,3 +14,36 @@ vaadin-grid::part(align-end) {
 vaadin-grid::part(negative) {
     color: var(--lumo-error-text-color);
 }
+
+.alert {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+    gap: var(--lumo-space-s);
+    padding: var(--lumo-space-m);
+    border-radius: var(--lumo-border-radius-m);
+    border: 1px solid transparent;
+}
+
+/* Varianten via Lumo-Tokens */
+.alert.info {
+    background: var(--lumo-primary-color-10pct);
+    border-color: var(--lumo-primary-color-50pct);
+    color: var(--lumo-primary-text-color);
+}
+.alert.success {
+    background: var(--lumo-success-color-10pct);
+    border-color: var(--lumo-success-color-50pct);
+    color: var(--lumo-success-text-color);
+}
+.alert.warning {
+    background: var(--lumo-warning-color-10pct);
+    border-color: var(--lumo-warning-color-50pct);
+    color: var(--lumo-warning-text-color);
+}
+.alert.error {
+    background: var(--lumo-error-color-10pct);
+    border-color: var(--lumo-error-color-50pct);
+    color: var(--lumo-error-text-color);
+}

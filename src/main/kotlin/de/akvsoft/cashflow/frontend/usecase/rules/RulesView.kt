@@ -76,7 +76,7 @@ class RulesView(
             }
             textColumn({ service.scheduleLabel(it) }) {
                 setHeader("Zeitplan")
-                width = "300px"
+                width = "200px"
                 flexGrow = 0
             }
 

@@ -11,7 +11,7 @@ import java.time.LocalDate
 class RulesService(
     private val ruleRepository: RuleRepository
 ) {
-    fun findAll(): List<Rule> = ruleRepository.findAll()
+    fun findAll(): List<Rule> = ruleRepository.findAllByOrderByStartAsc()
 
     fun create(): Rule = Rule(
         name = "",
@@ -36,6 +36,7 @@ class RulesService(
             ScheduleFrequency.YEAR -> "Jahr"
         }
         val every = if (s.interval <= 1) "jeden" else "alle ${s.interval}"
-        return "$every $freq(e)"
+        val freqs = if (s.interval <= 1) freq else "${freq}e"
+        return "$every $freqs"
     }
 }
