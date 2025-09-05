@@ -3,6 +3,7 @@ package de.akvsoft.cashflow.frontend.usecase.calculate
 import com.vaadin.flow.component.datepicker.DatePicker
 import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.grid.GridVariant
+import com.vaadin.flow.component.grid.ColumnTextAlign
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.data.provider.ListDataProvider
@@ -14,6 +15,9 @@ import de.akvsoft.cashflow.frontend.components.grid
 import de.akvsoft.cashflow.frontend.components.grid.textColumn
 import de.akvsoft.cashflow.frontend.components.horizontalLayout
 import de.akvsoft.cashflow.frontend.components.nativeLabel
+import de.akvsoft.cashflow.frontend.util.formatCurrency
+import de.akvsoft.cashflow.frontend.util.formatDate
+import java.math.BigDecimal
 import java.time.LocalDate
 
 @Route("calculate")
@@ -50,25 +54,33 @@ class CalculateView(
             emptyStateText = "Keine Einträge vorhanden"
             addThemeVariants(GridVariant.LUMO_ROW_STRIPES)
 
-            textColumn(Calculation::date) {
+            textColumn({ it.date.formatDate() }) {
                 setHeader("Datum")
                 isAutoWidth = true
+                flexGrow = 0
             }
-            textColumn(Calculation::amount) {
+             textColumn({ it.amount.formatCurrency() }) {
                 setHeader("Betrag")
                 isAutoWidth = true
+                flexGrow = 0
+                textAlign = ColumnTextAlign.END
+                setPartNameGenerator { item -> if (item.amount < BigDecimal.ZERO) "negative" else null }
             }
-            textColumn(Calculation::balance) {
+            textColumn({ it.balance.formatCurrency() }) {
                 setHeader("Saldo")
                 isAutoWidth = true
+                flexGrow = 0
+                textAlign = ColumnTextAlign.END
+                setPartNameGenerator { item -> if (item.balance < BigDecimal.ZERO) "negative" else null }
             }
             textColumn(Calculation::name) {
                 setHeader("Name")
-                isAutoWidth = true
+                flexGrow = 1
             }
             textColumn({ it.type.toDisplayString() }) {
                 setHeader("Typ")
                 isAutoWidth = true
+                flexGrow = 0
             }
         }
         calculate()

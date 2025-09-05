@@ -84,9 +84,9 @@ class EntryDialog(
         }.apply { addThemeVariants(ButtonVariant.LUMO_PRIMARY) }
 
         footer.add(HorizontalLayout(cancel, save))
-        setModal(true)
-        setDraggable(true)
-        setResizable(true)
+        isModal = true
+        isDraggable = true
+        isResizable = true
         width = "540px"
     }
 

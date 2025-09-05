@@ -4,10 +4,13 @@ import com.vaadin.flow.spring.annotation.VaadinSessionScope
 import de.akvsoft.cashflow.backend.database.Entry
 import de.akvsoft.cashflow.backend.database.EntryRepository
 import de.akvsoft.cashflow.backend.database.EntryType
+import de.akvsoft.cashflow.backend.database.Rule
 import de.akvsoft.cashflow.backend.database.RuleRepository
+import de.akvsoft.cashflow.backend.database.ScheduleFrequency
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 @Service
 @VaadinSessionScope
@@ -28,16 +31,35 @@ class CalculateService(
             var currentBalance = BigDecimal.ZERO
             while (currentDate < deadline) {
                 val dayEntries = entries.filter { it.date.isEqual(currentDate) }
-                addAll(dayEntries.map {
+                dayEntries.forEach {
                     currentBalance += it.amount
-                    Calculation(
-                        date = it.date,
-                        amount = it.amount,
-                        balance = currentBalance,
-                        name = it.name ?: it.rule!!.name,
-                        type = it.type
+                    add(
+                        Calculation(
+                            date = it.date,
+                            amount = it.amount,
+                            balance = currentBalance,
+                            name = it.name ?: it.rule!!.name,
+                            type = it.type
+                        )
                     )
-                })
+                }
+
+                rules.asSequence()
+                    .filter { !dayEntries.any { entry -> entry.rule?.id == it.id } }
+                    .filter { isDue(it, currentDate) }
+                    .forEach {
+                        currentBalance += it.amount
+                        add(
+                            Calculation(
+                                date = currentDate,
+                                amount = it.amount,
+                                balance = currentBalance,
+                                name = it.name,
+                                type = it.type
+                            )
+                        )
+                    }
+
                 currentDate = currentDate.plusDays(1)
             }
         }
@@ -52,6 +74,23 @@ class CalculateService(
     )
 
     fun saveEntry(entry: Entry): Entry = entryRepository.save(entry)
+
+    private fun isDue(rule: Rule, currentDate: LocalDate): Boolean {
+        if (rule.start > currentDate) return false
+        if (rule.end != null && rule.end!! < currentDate) return false
+
+        var ruleDate = rule.start
+        while (ruleDate <= currentDate) {
+            if (ruleDate.isEqual(currentDate)) return true
+            ruleDate = ruleDate.plus(
+                rule.schedule.interval.toLong(), when (rule.schedule.frequency) {
+                    ScheduleFrequency.MONTH -> ChronoUnit.MONTHS
+                    ScheduleFrequency.YEAR -> ChronoUnit.YEARS
+                }
+            )
+        }
+        return false;
+    }
 }
 
 class Calculation(

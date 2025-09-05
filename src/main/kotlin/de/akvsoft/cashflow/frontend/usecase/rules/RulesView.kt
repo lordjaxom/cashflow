@@ -5,14 +5,13 @@ import com.vaadin.flow.component.grid.GridVariant
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.router.Route
-import de.akvsoft.cashflow.backend.database.EntryType
 import de.akvsoft.cashflow.backend.database.Rule
 import de.akvsoft.cashflow.backend.database.toDisplayString
 import de.akvsoft.cashflow.frontend.components.button
 import de.akvsoft.cashflow.frontend.components.grid
 import de.akvsoft.cashflow.frontend.components.grid.textColumn
 import de.akvsoft.cashflow.frontend.components.horizontalLayout
-import org.apache.commons.codec.language.bm.RuleType
+import de.akvsoft.cashflow.frontend.util.formatCurrency
 
 @Route("rules")
 class RulesView(
@@ -50,9 +49,8 @@ class RulesView(
             }
             textColumn({  it.type.toDisplayString() }) {
                 setHeader("Typ")
-                isAutoWidth = true
             }
-            textColumn(Rule::amount) {
+            textColumn({ it.amount.formatCurrency() }) {
                 setHeader("Betrag")
                 isAutoWidth = true
             }

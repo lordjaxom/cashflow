@@ -18,6 +18,7 @@ import de.akvsoft.cashflow.backend.database.EntryType
 import de.akvsoft.cashflow.backend.database.Rule
 import de.akvsoft.cashflow.backend.database.ScheduleFrequency
 import de.akvsoft.cashflow.backend.database.toDisplayString
+import de.akvsoft.cashflow.frontend.util.applyCurrencyLocale
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -37,6 +38,7 @@ class RuleDialog(
     private val amount = BigDecimalField("Betrag").apply {
         isRequiredIndicatorVisible = true
         value = BigDecimal.ZERO
+        applyCurrencyLocale()
     }
     private val start = DatePicker("Start").apply {
         isRequiredIndicatorVisible = true
@@ -79,16 +81,16 @@ class RuleDialog(
         binder.forField(name).asRequired("Name ist erforderlich").bind("name")
         binder.forField(type).asRequired("Typ ist erforderlich").bind("type")
         binder.forField(amount).asRequired("Betrag ist erforderlich").bind("amount")
-        binder.forField(start).asRequired("Start ist erforderlich").bind("startDate")
+        binder.forField(start).asRequired("Start ist erforderlich").bind("start")
         binder.forField(end)/*.withValidator({ endValue, _ ->
             val s = start.value
             endValue == null || s == null || !endValue.isBefore(s)
-        }, "Ende darf nicht vor Start liegen")*/.bind("endDate")
+        }, "Ende darf nicht vor Start liegen")*/.bind("end")
 
         binder.forField(frequency).asRequired("Häufigkeit ist erforderlich").bind("schedule.frequency")
         binder.forField(interval)
             .withValidator(IntegerRangeValidator("Intervall muss >= 1 sein", 1, null))
-            .bind("schedule.internal")
+            .bind("schedule.interval")
         binder.forField(dayOfMonth)
             .withValidator(IntegerRangeValidator("Tag muss zwischen 1 und 31 sein", 1, 31))
             .bind("schedule.dayOfMonth")
