@@ -8,10 +8,6 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
-enum class EntryType {
-    REAL, ESTIMATE, FLATRATE
-}
-
 @Entity
 class Entry(
     @Column(nullable = false)
@@ -24,8 +20,21 @@ class Entry(
     var type: EntryType,
 
     @OneToOne(optional=true)
-    var rule: Rule? = null,
+    var rule: Rule?,
+
+    @Column
+    var name: String?,
 
     @Id
     val id: UUID = UUID.randomUUID()
 )
+
+enum class EntryType {
+    REAL, ESTIMATE, FLATRATE
+}
+
+fun EntryType.toDisplayString() = when (this) {
+    EntryType.REAL -> "reell"
+    EntryType.ESTIMATE -> "geschätzt"
+    EntryType.FLATRATE -> "pauschal"
+}

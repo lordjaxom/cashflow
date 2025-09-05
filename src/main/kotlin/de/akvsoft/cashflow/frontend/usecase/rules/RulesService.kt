@@ -17,8 +17,8 @@ class RulesService(
         name = "",
         type = EntryType.REAL,
         amount = BigDecimal.ZERO,
-        startDate = LocalDate.now(),
-        endDate = null,
+        start = LocalDate.now(),
+        end = null,
         schedule = Schedule(
             frequency = ScheduleFrequency.MONTH,
             interval = 1,

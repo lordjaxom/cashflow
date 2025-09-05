@@ -20,11 +20,11 @@ class Rule(
     @Column(nullable = false)
     var amount: BigDecimal,
 
-    @Column(nullable = false)
-    var startDate: LocalDate,
+    @Column(name = "start_", nullable = false)
+    var start: LocalDate,
 
-    @Column
-    var endDate: LocalDate?,
+    @Column(name = "end_")
+    var end: LocalDate?,
 
     @OneToOne(cascade = [CascadeType.ALL], optional = false, orphanRemoval = true)
     var schedule: Schedule,

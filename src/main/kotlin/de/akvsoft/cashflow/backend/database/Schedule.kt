@@ -14,7 +14,7 @@ class Schedule(
     @Column(nullable = false)
     var frequency: ScheduleFrequency,
 
-    @Column(nullable = false)
+    @Column(name="interval_", nullable = false)
     var interval: Int,
 
     @Column(nullable = false)
@@ -23,3 +23,8 @@ class Schedule(
     @Id
     val id: UUID = UUID.randomUUID()
 )
+
+fun ScheduleFrequency.toDisplayString() = when (this) {
+    ScheduleFrequency.MONTH -> "monatlich"
+    ScheduleFrequency.YEAR -> "jährlich"
+}

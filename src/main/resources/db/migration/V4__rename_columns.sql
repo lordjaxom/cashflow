@@ -1,0 +1,1 @@
+ALTER TABLE SCHEDULE RENAME COLUMN internal TO interval_;

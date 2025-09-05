@@ -23,7 +23,8 @@ class CalculateService(
         date = LocalDate.now(),
         amount = BigDecimal.ZERO,
         type = EntryType.REAL,
-        rule = null
+        rule = null,
+        name = ""
     )
 
     fun saveEntry(entry: Entry): Entry = entryRepository.save(entry)

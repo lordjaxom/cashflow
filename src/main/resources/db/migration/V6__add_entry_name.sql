@@ -1,0 +1,2 @@
+ALTER TABLE entry
+    ADD name VARCHAR(255);

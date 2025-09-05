@@ -4,6 +4,7 @@ import com.vaadin.flow.component.grid.GridVariant
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.router.Route
+import de.akvsoft.cashflow.backend.database.toDisplayString
 import de.akvsoft.cashflow.frontend.components.button
 import de.akvsoft.cashflow.frontend.components.datePicker
 import de.akvsoft.cashflow.frontend.components.grid
@@ -12,7 +13,9 @@ import de.akvsoft.cashflow.frontend.components.horizontalLayout
 import de.akvsoft.cashflow.frontend.components.nativeLabel
 
 @Route("calculate")
-class CalculateView : VerticalLayout() {
+class CalculateView(
+    private val service: CalculateService
+) : VerticalLayout() {
 
     init {
         setHeightFull()
@@ -28,17 +31,22 @@ class CalculateView : VerticalLayout() {
             nativeLabel("Stichtag:")
             datePicker()
             button("Berechnen")
-            button("Hinzufügen")
+            button("Hinzufügen") {
+                addClickListener {
+                    EntryDialog { entry -> service.saveEntry(entry) }
+                        .open(service.createEntry())
+                }
+            }
         }
         grid<Calculation> {
-            emptyStateText="Keine Einträge vorhanden"
+            emptyStateText = "Keine Einträge vorhanden"
             addThemeVariants(GridVariant.LUMO_ROW_STRIPES)
 
             textColumn(Calculation::date) {
                 setHeader("Datum")
                 isAutoWidth = true
             }
-            textColumn(Calculation::amount){
+            textColumn(Calculation::amount) {
                 setHeader("Betrag")
                 isAutoWidth = true
             }
@@ -50,7 +58,7 @@ class CalculateView : VerticalLayout() {
                 setHeader("Name")
                 isAutoWidth = true
             }
-            textColumn(Calculation::type) {
+            textColumn({ it.type.toDisplayString() }) {
                 setHeader("Typ")
                 isAutoWidth = true
             }

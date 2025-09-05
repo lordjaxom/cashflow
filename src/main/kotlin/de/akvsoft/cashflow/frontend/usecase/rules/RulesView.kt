@@ -5,11 +5,14 @@ import com.vaadin.flow.component.grid.GridVariant
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.router.Route
+import de.akvsoft.cashflow.backend.database.EntryType
 import de.akvsoft.cashflow.backend.database.Rule
+import de.akvsoft.cashflow.backend.database.toDisplayString
 import de.akvsoft.cashflow.frontend.components.button
 import de.akvsoft.cashflow.frontend.components.grid
 import de.akvsoft.cashflow.frontend.components.grid.textColumn
 import de.akvsoft.cashflow.frontend.components.horizontalLayout
+import org.apache.commons.codec.language.bm.RuleType
 
 @Route("rules")
 class RulesView(
@@ -45,7 +48,7 @@ class RulesView(
                 isAutoWidth = true
                 flexGrow = 1
             }
-            textColumn(Rule::type) {
+            textColumn({  it.type.toDisplayString() }) {
                 setHeader("Typ")
                 isAutoWidth = true
             }
@@ -53,7 +56,7 @@ class RulesView(
                 setHeader("Betrag")
                 isAutoWidth = true
             }
-            textColumn<Rule, String>({ service.scheduleLabel(it) }) {
+            textColumn({ service.scheduleLabel(it) }) {
                 setHeader("Zeitplan")
                 isAutoWidth = true
                 flexGrow = 1

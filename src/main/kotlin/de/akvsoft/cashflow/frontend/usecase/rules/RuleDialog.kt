@@ -17,6 +17,7 @@ import com.vaadin.flow.data.validator.IntegerRangeValidator
 import de.akvsoft.cashflow.backend.database.EntryType
 import de.akvsoft.cashflow.backend.database.Rule
 import de.akvsoft.cashflow.backend.database.ScheduleFrequency
+import de.akvsoft.cashflow.backend.database.toDisplayString
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -30,13 +31,7 @@ class RuleDialog(
     private val name = TextField("Name").apply { isRequiredIndicatorVisible = true }
     private val type = ComboBox<EntryType>("Typ").apply {
         setItems(ListDataProvider(EntryType.entries))
-        setItemLabelGenerator {
-            when (it) {
-                EntryType.REAL -> "reell"
-                EntryType.ESTIMATE -> "geschätzt"
-                EntryType.FLATRATE -> "pauschal"
-            }
-        }
+        setItemLabelGenerator { it.toDisplayString() }
         isRequiredIndicatorVisible = true
     }
     private val amount = BigDecimalField("Betrag").apply {
@@ -52,12 +47,7 @@ class RuleDialog(
     // Schedule fields
     private val frequency = ComboBox<ScheduleFrequency>("Häufigkeit").apply {
         setItems(ListDataProvider(ScheduleFrequency.entries))
-        setItemLabelGenerator {
-            when (it) {
-                ScheduleFrequency.MONTH -> "Monat"
-                ScheduleFrequency.YEAR -> "Jahr"
-            }
-        }
+        setItemLabelGenerator { it.toDisplayString() }
         isRequiredIndicatorVisible = true
     }
     private val interval = IntegerField("Intervall").apply {

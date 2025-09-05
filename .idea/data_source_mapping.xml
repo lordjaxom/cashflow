@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="file://$PROJECT_DIR$/src/main/resources/db/migration/V2__rename_columns.sql" value="0f254d56-f1cd-43cf-bbb9-d4bd8de6fe1c" />
+  </component>
+</project>
