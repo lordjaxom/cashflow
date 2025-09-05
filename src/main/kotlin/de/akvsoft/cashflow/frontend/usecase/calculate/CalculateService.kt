@@ -4,6 +4,7 @@ import com.vaadin.flow.spring.annotation.VaadinSessionScope
 import de.akvsoft.cashflow.backend.database.Entry
 import de.akvsoft.cashflow.backend.database.EntryRepository
 import de.akvsoft.cashflow.backend.database.EntryType
+import de.akvsoft.cashflow.backend.database.RuleRepository
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -12,11 +13,34 @@ import java.time.LocalDate
 @VaadinSessionScope
 class CalculateService(
     private val entryRepository: EntryRepository,
+    private val ruleRepository: RuleRepository
 ) {
 
     fun calculate(deadline: LocalDate): List<Calculation> {
-        // Platzhalter: Implementierung folgt später
-        return emptyList()
+        val entries = entryRepository.findAllByOrderByDateAsc()
+        val firstEntry = entries.firstOrNull() ?: return emptyList()
+        if (firstEntry.rule != null) throw IllegalStateException("Der erste Eintrag darf kein Regel-Eintrag sein.")
+
+        return buildList {
+            val rules = ruleRepository.findAll()
+            val startDate = entries.first().date
+            var currentDate = startDate
+            var currentBalance = BigDecimal.ZERO
+            while (currentDate < deadline) {
+                val dayEntries = entries.filter { it.date.isEqual(currentDate) }
+                addAll(dayEntries.map {
+                    currentBalance += it.amount
+                    Calculation(
+                        date = it.date,
+                        amount = it.amount,
+                        balance = currentBalance,
+                        name = it.name ?: it.rule!!.name,
+                        type = it.type
+                    )
+                })
+                currentDate = currentDate.plusDays(1)
+            }
+        }
     }
 
     fun createEntry(): Entry = Entry(

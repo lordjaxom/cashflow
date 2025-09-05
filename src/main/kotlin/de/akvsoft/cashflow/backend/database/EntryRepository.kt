@@ -5,4 +5,7 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-interface EntryRepository : JpaRepository<Entry, UUID>
+interface EntryRepository : JpaRepository<Entry, UUID>{
+
+    fun findAllByOrderByDateAsc(): List<Entry>
+}
