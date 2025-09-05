@@ -10,6 +10,7 @@ import de.akvsoft.cashflow.backend.database.ScheduleFrequency
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.temporal.ChronoUnit
 
 @Service
@@ -19,7 +20,7 @@ class CalculateService(
     private val ruleRepository: RuleRepository
 ) {
 
-    fun calculate(deadline: LocalDate): List<Calculation> {
+    fun calculate(deadline: LocalDate): List<Row> {
         val entries = entryRepository.findAllByOrderByDateAsc()
         val firstEntry = entries.firstOrNull() ?: return emptyList()
         if (firstEntry.rule != null) throw IllegalStateException("Der erste Eintrag darf kein Regel-Eintrag sein.")
@@ -28,8 +29,14 @@ class CalculateService(
             val rules = ruleRepository.findAll()
             val startDate = entries.first().date
             var currentDate = startDate
+            var currentMonth = YearMonth.of(1970, 1)
             var currentBalance = BigDecimal.ZERO
             while (currentDate < deadline) {
+                if (!currentMonth.equals(YearMonth.from(currentDate))) {
+                    currentMonth = YearMonth.from(currentDate)
+                    add(MonthHeader(currentMonth))
+                    currentMonth = YearMonth.from(currentDate)
+                }
                 val dayEntries = entries.filter { it.date.isEqual(currentDate) }
                 dayEntries.forEach {
                     currentBalance += it.amount
@@ -97,6 +104,12 @@ class CalculateService(
     }
 }
 
+sealed interface Row
+
+class MonthHeader(
+    val month: YearMonth
+): Row
+
 class Calculation(
     val date: LocalDate,
     val amount: BigDecimal,
@@ -105,4 +118,4 @@ class Calculation(
     val type: EntryType,
     val entry: Entry?,
     val rule: Rule?
-)
+): Row

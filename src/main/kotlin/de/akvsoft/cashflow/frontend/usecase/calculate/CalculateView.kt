@@ -1,6 +1,5 @@
 package de.akvsoft.cashflow.frontend.usecase.calculate
 
-import com.vaadin.flow.component.Component
 import com.vaadin.flow.component.Text
 import com.vaadin.flow.component.datepicker.DatePicker
 import com.vaadin.flow.component.grid.Grid
@@ -8,7 +7,6 @@ import com.vaadin.flow.component.grid.GridVariant
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.data.provider.ListDataProvider
-import com.vaadin.flow.data.renderer.ComponentRenderer
 import com.vaadin.flow.dom.Style
 import com.vaadin.flow.router.Route
 import de.akvsoft.cashflow.backend.database.EntryType
@@ -27,7 +25,6 @@ import de.akvsoft.cashflow.frontend.util.formatCurrency
 import de.akvsoft.cashflow.frontend.util.formatDate
 import java.math.BigDecimal
 import java.time.LocalDate
-import java.time.YearMonth
 
 
 @Route("calculate")
@@ -38,7 +35,7 @@ class CalculateView(
     private val datePicker: DatePicker
     private val dateText: Text
     private val balanceText: Text
-    private val grid: Grid<Calculation>
+    private val grid: Grid<Row>
 
     init {
         setHeightFull()
@@ -55,6 +52,7 @@ class CalculateView(
             }
             datePicker = datePicker {
                 value = LocalDate.now().plusMonths(3)
+                addValueChangeListener { calculate() }
             }
             button("Berechnen") {
                 addClickListener { calculate() }
@@ -77,77 +75,56 @@ class CalculateView(
                 style.setFontSize("1.25em")
             }
         }
-        grid = grid<Calculation> {
+        grid = grid<Row> {
             emptyStateText = "Keine Einträge vorhanden"
             isDetailsVisibleOnClick = false
             setWidthFull()
             addThemeVariants(GridVariant.LUMO_ROW_STRIPES)
+            addItemDoubleClickListener { editEntry(it.item) }
 
-            textColumn({ it.date.formatDate() }) {
+            textColumn({ it.formatDate() }) {
                 setHeader("Datum")
-                width = "120px"
+                width = "150px"
                 flexGrow = 0
             }
-            textColumn({ it.amount.formatCurrency() }) {
+            textColumn({ (it as? Calculation)?.amount?.formatCurrency() }) {
                 setHeader("Betrag")
                 width = "120px"
                 flexGrow = 0
                 setPartNameGenerator {
-                    buildString {
+                    if (it is Calculation) buildString {
                         append("align-end")
                         if (it.amount < BigDecimal.ZERO) append(" negative")
-                    }
+                    } else null
                 }
             }
-            textColumn({ it.balance.formatCurrency() }) {
+            textColumn({ (it as? Calculation)?.balance?.formatCurrency() }) {
                 setHeader("Saldo")
                 width = "120px"
                 flexGrow = 0
                 setPartNameGenerator {
-                    buildString {
+                    if (it is Calculation) buildString {
                         append("align-end")
                         if (it.balance < BigDecimal.ZERO) append(" negative")
-                    }
+                    } else null
                 }
             }
-            textColumn(Calculation::name) {
+            textColumn({ (it as? Calculation)?.name }) {
                 setHeader("Name")
                 flexGrow = 1
             }
-            componentColumn({ formatType(it) }) {
+            componentColumn({ (it as? Calculation)?.formatType() }) {
                 setHeader("Typ")
                 width = "120px"
                 flexGrow = 0
             }
-            textColumn({ formatSource(it) }) {
+            textColumn({ (it as? Calculation)?.formatSource() }) {
                 setHeader("Quelle")
                 width = "120px"
                 flexGrow = 0
             }
 
-            setItemDetailsRenderer(ComponentRenderer { it -> root {
-                div {
-                    text(YearMonth.from(it.date).plusMonths(1).formatDate())
-                    style.setFontWeight(Style.FontWeight.BOLD)
-                    style.setPaddingTop("5px")
-                }
-            }})
-
-            addItemDoubleClickListener { event ->
-                val item = event.item
-                if (item.rule != null && item.entry == null) {
-                    EntryDialog { entry ->
-                        entry.rule = item.rule
-                        service.saveEntry(entry)
-                        calculate()
-                    }.openForRule(item.rule, item.date)
-                } else {
-                    EntryDialog { entry ->
-                        service.saveEntry(entry)
-                        calculate()
-                    }.open(item.entry!!)
-                }
-            }
+            setPartNameGenerator { if (it is MonthHeader) "header-row" else null }
         }
         calculate()
     }
@@ -156,43 +133,43 @@ class CalculateView(
         val items = service.calculate(datePicker.value)
         dateText.text = datePicker.value.formatDate()
         if (!items.isEmpty()) {
-            balanceText.text = items.last().balance.formatCurrency()
+            balanceText.text = items.asSequence().filterIsInstance<Calculation>().last().balance.formatCurrency()
         }
         grid.setItems(ListDataProvider(items))
+    }
 
-        if (items.isNotEmpty()) {
-            var currentMonth = YearMonth.from(items[0].date)
-            (1 until items.size).forEach {
-                val itemMonth = YearMonth.from(items[it].date)
-                if (!itemMonth.equals(currentMonth)) {
-                    grid.setDetailsVisible(items[it-1], true)
-                    currentMonth = itemMonth
-                }
-            }
+    private fun editEntry(item: Row) {
+        if (item !is Calculation) return;
+        val dialog = EntryDialog { service.saveEntry(it); calculate() }
+        if (item.rule != null && item.entry == null) {
+            dialog.openForRule(item.rule, item.date)
+        } else {
+            dialog.open(item.entry!!)
         }
     }
 
-    private fun formatType(calculation: Calculation): Component = root {
-        span(calculation.type.toDisplayString()) {
+    private fun Row.formatDate() = when (this) {
+        is Calculation -> date.formatDate()
+        is MonthHeader -> month.formatDate()
+    }
+
+    private fun Calculation.formatType() = root {
+        span(type.toDisplayString()) {
             element.themeList += listOf(
                 "badge", "pill", "small",
-                when (calculation.type) {
+                when (type) {
                     EntryType.REAL -> "success"
                     EntryType.FLATRATE -> "contrast"
                     EntryType.ESTIMATE -> "warning"
                 }
             )
-            element.setAttribute("aria-label", calculation.type.toDisplayString())
+            element.setAttribute("aria-label", type.toDisplayString())
         }
     }
 
-    private fun formatSource(calculation: Calculation): String {
-        if (calculation.entry != null && calculation.rule != null) {
-            return "Override"
-        }
-        if (calculation.entry != null) {
-            return "Eintrag"
-        }
-        return "Regel"
+    private fun Calculation.formatSource() = when {
+        entry != null && rule != null -> "Override"
+        entry != null -> "Eintrag"
+        else -> "Regel"
     }
 }

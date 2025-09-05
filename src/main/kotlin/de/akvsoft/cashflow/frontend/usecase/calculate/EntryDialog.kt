@@ -106,7 +106,7 @@ class EntryDialog(
             date = onDate,
             amount = rule.amount,
             type = rule.type,
-            rule = null,
+            rule = rule,
             name = rule.name
         )
         name.isReadOnly = true

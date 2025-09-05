@@ -12,7 +12,7 @@ import kotlin.contracts.contract
 
 @VaadinDsl
 fun <T> Grid<T>.componentColumn(
-    componentProvider: (T) -> Component,
+    componentProvider: (T) -> Component?,
     block: (@VaadinDsl Grid.Column<T>).() -> Unit = {}
 ): Grid.Column<T> {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }

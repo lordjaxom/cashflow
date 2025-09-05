@@ -16,14 +16,9 @@ vaadin-grid::part(negative) {
     color: var(--lumo-error-text-color);
 }
 
-vaadin-grid::part(details-cell),
-vaadin-grid::part(details) {
+vaadin-grid::part(header-row) {
     background: var(--lumo-contrast-20pct);
-}
-
-vaadin-grid::part(details-cell),
-vaadin-grid::part(details) {
-    padding: 0 !important;
+    font-weight: bold;
 }
 
 .alert {
