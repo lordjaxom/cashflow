@@ -40,39 +40,17 @@ class CalculateService(
                     add(MonthHeader(YearMonth.from(date), balance))
                 }
 
-                val dayEntries = entries.filter { it.date.isEqual(date) }
-                dayEntries.forEach {
-                    balance += it.amount
-                    add(
-                        Calculation(
-                            date = it.date,
-                            amount = it.amount,
-                            balance = balance,
-                            name = it.name ?: it.rule!!.name,
-                            type = it.type,
-                            entry = it,
-                            rule = it.rule
-                        )
-                    )
-                }
+                addAll(buildList {
+                    entries.asSequence()
+                        .filter { it.date.isEqual(date) }
+                        .forEach { balance += it.amount; add(it.toCalculation(balance)) }
 
-                rules.asSequence()
-                    .filter { !dayEntries.any { entry -> entry.rule?.id == it.id } }
-                    .filter { isDue(it, date) }
-                    .forEach {
-                        balance += it.amount
-                        add(
-                            Calculation(
-                                date = date,
-                                amount = it.amount,
-                                balance = balance,
-                                name = it.name,
-                                type = it.type,
-                                entry = null,
-                                rule = it
-                            )
-                        )
-                    }
+                    rules.asSequence()
+                        .filter { !any { calc -> calc is Calculation && calc.rule?.id == it.id } }
+                        .filter { it.isDue(date) }
+                        .forEach { balance += it.amount; add(it.toCalculation(date, balance)) }
+
+                })
 
                 date = date.plusDays(1)
             }
@@ -89,15 +67,15 @@ class CalculateService(
 
     fun saveEntry(entry: Entry): Entry = entryRepository.save(entry)
 
-    private fun isDue(rule: Rule, currentDate: LocalDate): Boolean {
-        if (rule.start > currentDate) return false
-        if (rule.end != null && rule.end!! < currentDate) return false
+    private fun Rule.isDue(date: LocalDate): Boolean {
+        if (start > date) return false
+        if (end?.let { it < date } == true) return false
 
-        var ruleDate = rule.start
-        while (ruleDate <= currentDate) {
-            if (ruleDate.isEqual(currentDate)) return true
+        var ruleDate = start
+        while (ruleDate <= date) {
+            if (ruleDate.isEqual(date)) return true
             ruleDate = ruleDate.plus(
-                rule.schedule.interval.toLong(), when (rule.schedule.frequency) {
+                schedule.interval.toLong(), when (schedule.frequency) {
                     ScheduleFrequency.MONTH -> ChronoUnit.MONTHS
                     ScheduleFrequency.YEAR -> ChronoUnit.YEARS
                 }
@@ -105,6 +83,28 @@ class CalculateService(
         }
         return false;
     }
+
+    private fun Entry.toCalculation(balance: BigDecimal) =
+        Calculation(
+            date = date,
+            amount = amount,
+            balance = balance,
+            name = name ?: rule!!.name,
+            type = type,
+            entry = this,
+            rule = rule
+        )
+
+    private fun Rule.toCalculation(date: LocalDate, balance: BigDecimal) =
+        Calculation(
+            date = date,
+            amount = amount,
+            balance = balance,
+            name = name,
+            type = type,
+            entry = null,
+            rule = this
+        )
 }
 
 sealed interface Row {
