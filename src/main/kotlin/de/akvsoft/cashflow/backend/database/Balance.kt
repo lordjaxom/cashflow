@@ -4,13 +4,13 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import java.math.BigDecimal
-import java.time.YearMonth
+import java.time.LocalDate
 import java.util.UUID
 
 @Entity
 class Balance(
-    @Column(nullable = false)
-    var month: YearMonth,
+    @Column(name = "month_", nullable = false)
+    var month: LocalDate,
 
     @Column(nullable = false, columnDefinition = "DECIMAL(18,2)")
     var balance: BigDecimal,

@@ -1,6 +1,8 @@
+server:
+  port: 8081
 spring:
   application:
-    name: adohdo
+    name: cashflow
   datasource:
     url: jdbc:h2:file:./var/cashflow.h2
     username: sa

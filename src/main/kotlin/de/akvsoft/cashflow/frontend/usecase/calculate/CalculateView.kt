@@ -82,12 +82,12 @@ class CalculateView(
             addThemeVariants(GridVariant.LUMO_ROW_STRIPES)
             addItemDoubleClickListener { editEntry(it.item) }
 
-            textColumn({ it.formatDate() }) {
+            textColumn({ it.formattedDate }) {
                 setHeader("Datum")
                 width = "150px"
                 flexGrow = 0
             }
-            textColumn({ (it as? Calculation)?.amount?.formatCurrency() }) {
+            textColumn({ it.amount?.formatCurrency() }) {
                 setHeader("Betrag")
                 width = "120px"
                 flexGrow = 0
@@ -98,27 +98,24 @@ class CalculateView(
                     } else null
                 }
             }
-            textColumn({ (it as? Calculation)?.balance?.formatCurrency() }) {
+            textColumn({ it.balance.formatCurrency() }) {
                 setHeader("Saldo")
                 width = "120px"
                 flexGrow = 0
                 setPartNameGenerator {
-                    if (it is Calculation) buildString {
-                        append("align-end")
-                        if (it.balance < BigDecimal.ZERO) append(" negative")
-                    } else null
+                    listOfNotNull("align-end", if (it.balance < BigDecimal.ZERO) "negative" else null).joinToString(" ")
                 }
             }
-            textColumn({ (it as? Calculation)?.name }) {
+            textColumn({ it.name }) {
                 setHeader("Name")
                 flexGrow = 1
             }
-            componentColumn({ (it as? Calculation)?.formatType() }) {
+            componentColumn({ it.type?.toComponent() }) {
                 setHeader("Typ")
                 width = "120px"
                 flexGrow = 0
             }
-            textColumn({ (it as? Calculation)?.formatSource() }) {
+            textColumn({ it.formatSource() }) {
                 setHeader("Quelle")
                 width = "120px"
                 flexGrow = 0
@@ -148,26 +145,22 @@ class CalculateView(
         }
     }
 
-    private fun Row.formatDate() = when (this) {
-        is Calculation -> date.formatDate()
-        is MonthHeader -> month.formatDate()
-    }
-
-    private fun Calculation.formatType() = root {
-        span(type.toDisplayString()) {
+    private fun EntryType.toComponent() = root {
+        span(toDisplayString()) {
             element.themeList += listOf(
                 "badge", "pill", "small",
-                when (type) {
+                when (this@toComponent) {
                     EntryType.REAL -> "success"
                     EntryType.FLATRATE -> "contrast"
                     EntryType.ESTIMATE -> "warning"
                 }
             )
-            element.setAttribute("aria-label", type.toDisplayString())
+            element.setAttribute("aria-label", toDisplayString())
         }
     }
 
-    private fun Calculation.formatSource() = when {
+    private fun Row.formatSource() = when {
+        this !is Calculation -> ""
         entry != null && rule != null -> "Override"
         entry != null -> "Eintrag"
         else -> "Regel"

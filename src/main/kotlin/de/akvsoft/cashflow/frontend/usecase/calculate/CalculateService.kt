@@ -1,12 +1,14 @@
 package de.akvsoft.cashflow.frontend.usecase.calculate
 
 import com.vaadin.flow.spring.annotation.VaadinSessionScope
+import de.akvsoft.cashflow.backend.database.BalanceRepository
 import de.akvsoft.cashflow.backend.database.Entry
 import de.akvsoft.cashflow.backend.database.EntryRepository
 import de.akvsoft.cashflow.backend.database.EntryType
 import de.akvsoft.cashflow.backend.database.Rule
 import de.akvsoft.cashflow.backend.database.RuleRepository
 import de.akvsoft.cashflow.backend.database.ScheduleFrequency
+import de.akvsoft.cashflow.frontend.util.formatDate
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -17,34 +19,35 @@ import java.time.temporal.ChronoUnit
 @VaadinSessionScope
 class CalculateService(
     private val entryRepository: EntryRepository,
-    private val ruleRepository: RuleRepository
+    private val ruleRepository: RuleRepository,
+    private val balanceRepository: BalanceRepository
 ) {
 
     fun calculate(deadline: LocalDate): List<Row> {
+        val balance = balanceRepository.findFirstByOrderByMonthDesc() ?: return emptyList()
+
+        val startDate = balance.month.withDayOfMonth(1)
+        if (deadline < startDate) return emptyList()
+
         val entries = entryRepository.findAllByOrderByDateAsc()
-        val firstEntry = entries.firstOrNull() ?: return emptyList()
-        if (firstEntry.rule != null) throw IllegalStateException("Der erste Eintrag darf kein Regel-Eintrag sein.")
+        val rules = ruleRepository.findAll()
 
         return buildList {
-            val rules = ruleRepository.findAll()
-            val startDate = entries.first().date
-            var currentDate = startDate
-            var currentMonth = YearMonth.of(1970, 1)
-            var currentBalance = BigDecimal.ZERO
-            while (currentDate < deadline) {
-                if (!currentMonth.equals(YearMonth.from(currentDate))) {
-                    currentMonth = YearMonth.from(currentDate)
-                    add(MonthHeader(currentMonth))
-                    currentMonth = YearMonth.from(currentDate)
+            var date = startDate
+            var balance = balance.balance
+            while (date <= deadline) {
+                if (date.dayOfMonth == 1) {
+                    add(MonthHeader(YearMonth.from(date), balance))
                 }
-                val dayEntries = entries.filter { it.date.isEqual(currentDate) }
+
+                val dayEntries = entries.filter { it.date.isEqual(date) }
                 dayEntries.forEach {
-                    currentBalance += it.amount
+                    balance += it.amount
                     add(
                         Calculation(
                             date = it.date,
                             amount = it.amount,
-                            balance = currentBalance,
+                            balance = balance,
                             name = it.name ?: it.rule!!.name,
                             type = it.type,
                             entry = it,
@@ -55,14 +58,14 @@ class CalculateService(
 
                 rules.asSequence()
                     .filter { !dayEntries.any { entry -> entry.rule?.id == it.id } }
-                    .filter { isDue(it, currentDate) }
+                    .filter { isDue(it, date) }
                     .forEach {
-                        currentBalance += it.amount
+                        balance += it.amount
                         add(
                             Calculation(
-                                date = currentDate,
+                                date = date,
                                 amount = it.amount,
-                                balance = currentBalance,
+                                balance = balance,
                                 name = it.name,
                                 type = it.type,
                                 entry = null,
@@ -71,7 +74,7 @@ class CalculateService(
                         )
                     }
 
-                currentDate = currentDate.plusDays(1)
+                date = date.plusDays(1)
             }
         }
     }
@@ -104,18 +107,32 @@ class CalculateService(
     }
 }
 
-sealed interface Row
+sealed interface Row {
+    val formattedDate: String
+    val amount: BigDecimal?
+    val balance: BigDecimal
+    val name: String
+    val type: EntryType?
+}
 
 class MonthHeader(
-    val month: YearMonth
-): Row
+    month: YearMonth,
+    override val balance: BigDecimal
+) : Row {
+    override val formattedDate = month.formatDate()
+    override val amount: BigDecimal? = null
+    override val name: String = ""
+    override val type: EntryType? = null
+}
 
 class Calculation(
     val date: LocalDate,
-    val amount: BigDecimal,
-    val balance: BigDecimal,
-    val name: String,
-    val type: EntryType,
+    override val amount: BigDecimal,
+    override val balance: BigDecimal,
+    override val name: String,
+    override val type: EntryType,
     val entry: Entry?,
     val rule: Rule?
-): Row
+) : Row {
+    override val formattedDate = date.formatDate()
+}
