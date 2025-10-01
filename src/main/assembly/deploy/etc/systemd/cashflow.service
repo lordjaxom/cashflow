@@ -1,11 +1,11 @@
 [Unit]
 Description=Cashflow Application
-After=syslog.target network.target mariadb.service
+After=syslog.target network.target
 
 [Service]
 Type=simple
-User=root
-Group=root
+User=lordjaxom
+Group=lordjaxom
 SuccessExitStatus=143
 WorkingDirectory=/opt/cashflow
 ExecStart=/opt/cashflow/bin/cashflow
