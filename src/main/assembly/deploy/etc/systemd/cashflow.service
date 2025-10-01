@@ -1,0 +1,15 @@
+[Unit]
+Description=Cashflow Application
+After=syslog.target network.target mariadb.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+SuccessExitStatus=143
+WorkingDirectory=/opt/cashflow
+ExecStart=/opt/cashflow/bin/cashflow
+ExecStop=/bin/kill -15 $MAINPID
+
+[Install]
+WantedBy=multi-user.target
