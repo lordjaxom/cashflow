@@ -1,6 +1,7 @@
 package de.akvsoft.cashflow.frontend.usecase.calculate
 
 import com.vaadin.flow.component.Text
+import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.datepicker.DatePicker
 import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.grid.GridVariant
@@ -21,6 +22,7 @@ import de.akvsoft.cashflow.frontend.components.horizontalLayout
 import de.akvsoft.cashflow.frontend.components.root
 import de.akvsoft.cashflow.frontend.components.span
 import de.akvsoft.cashflow.frontend.components.text
+import de.akvsoft.cashflow.frontend.components.verticalLayout
 import de.akvsoft.cashflow.frontend.util.formatCurrency
 import de.akvsoft.cashflow.frontend.util.formatDate
 import java.math.BigDecimal
@@ -57,9 +59,6 @@ class CalculateView(
             button("Berechnen") {
                 addClickListener { calculate() }
             }
-            button("Hinzufügen") {
-                addClickListener { EntryDialog { entry -> service.saveEntry(entry) }.open(service.createEntry()) }
-            }
         }
         div {
             setWidthFull()
@@ -75,54 +74,75 @@ class CalculateView(
                 style.setFontSize("1.25em")
             }
         }
-        grid = grid<Row> {
-            emptyStateText = "Keine Einträge vorhanden"
-            isDetailsVisibleOnClick = false
-            setWidthFull()
-            addThemeVariants(GridVariant.LUMO_ROW_STRIPES)
-            addItemDoubleClickListener { editEntry(it.item) }
+        verticalLayout {
+            isPadding = false
+            style.setGap("0")
+            setSizeFull()
 
-            textColumn({ it.formattedDate }) {
-                setHeader("Datum")
-                width = "150px"
-                flexGrow = 0
-            }
-            textColumn({ it.amount?.formatCurrency() }) {
-                setHeader("Betrag")
-                width = "120px"
-                flexGrow = 0
-                setPartNameGenerator {
-                    if (it is Calculation) buildString {
-                        append("align-end")
-                        if (it.amount < BigDecimal.ZERO) append(" negative")
-                    } else null
+            horizontalLayout {
+                alignItems = FlexComponent.Alignment.CENTER
+                justifyContentMode = FlexComponent.JustifyContentMode.END
+                setWidthFull()
+
+                button("Löschen") {
+                    addThemeVariants(ButtonVariant.LUMO_ERROR)
+                    style.setMarginInlineEnd("auto")
+                    addClickListener { deleteEntry() }
+                }
+                button("Hinzufügen") {
+                    addClickListener { EntryDialog { entry -> service.saveEntry(entry) }.open(service.createEntry()) }
                 }
             }
-            textColumn({ it.balance.formatCurrency() }) {
-                setHeader("Saldo")
-                width = "120px"
-                flexGrow = 0
-                setPartNameGenerator {
-                    listOfNotNull("align-end", if (it.balance < BigDecimal.ZERO) "negative" else null).joinToString(" ")
-                }
-            }
-            textColumn({ it.name }) {
-                setHeader("Name")
-                flexGrow = 1
-            }
-            componentColumn({ it.type?.toComponent() }) {
-                setHeader("Typ")
-                width = "120px"
-                flexGrow = 0
-            }
-            textColumn({ it.formatSource() }) {
-                setHeader("Quelle")
-                width = "120px"
-                flexGrow = 0
-            }
+            grid = grid<Row> {
+                emptyStateText = "Keine Einträge vorhanden"
+                isDetailsVisibleOnClick = false
+                setWidthFull()
+                addThemeVariants(GridVariant.LUMO_ROW_STRIPES)
+                addItemDoubleClickListener { editEntry(it.item) }
 
-            setPartNameGenerator { if (it is MonthHeader) "header-row" else null }
+                textColumn({ it.formattedDate }) {
+                    setHeader("Datum")
+                    width = "150px"
+                    flexGrow = 0
+                }
+                textColumn({ it.amount?.formatCurrency() }) {
+                    setHeader("Betrag")
+                    width = "120px"
+                    flexGrow = 0
+                    setPartNameGenerator {
+                        if (it is Calculation) buildString {
+                            append("align-end")
+                            if (it.amount < BigDecimal.ZERO) append(" negative")
+                        } else null
+                    }
+                }
+                textColumn({ it.balance.formatCurrency() }) {
+                    setHeader("Saldo")
+                    width = "120px"
+                    flexGrow = 0
+                    setPartNameGenerator {
+                        listOfNotNull("align-end", if (it.balance < BigDecimal.ZERO) "negative" else null).joinToString(" ")
+                    }
+                }
+                textColumn({ it.name }) {
+                    setHeader("Name")
+                    flexGrow = 1
+                }
+                componentColumn({ it.type?.toComponent() }) {
+                    setHeader("Typ")
+                    width = "120px"
+                    flexGrow = 0
+                }
+                textColumn({ it.formatSource() }) {
+                    setHeader("Quelle")
+                    width = "120px"
+                    flexGrow = 0
+                }
+
+                setPartNameGenerator { if (it is MonthHeader) "header-row" else null }
+            }
         }
+
         calculate()
     }
 
@@ -143,6 +163,12 @@ class CalculateView(
         } else {
             dialog.open(item.entry!!)
         }
+    }
+
+    private fun deleteEntry() {
+        val entry = (grid.selectedItems.firstOrNull() as? Calculation)?.entry ?: return
+        service.deleteEntry(entry)
+        calculate()
     }
 
     private fun EntryType.toComponent() = root {

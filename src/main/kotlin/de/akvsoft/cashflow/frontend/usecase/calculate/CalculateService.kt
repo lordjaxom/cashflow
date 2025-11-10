@@ -65,7 +65,13 @@ class CalculateService(
         name = ""
     )
 
-    fun saveEntry(entry: Entry): Entry = entryRepository.save(entry)
+    fun saveEntry(entry: Entry) {
+        entryRepository.save(entry)
+    }
+
+    fun deleteEntry(entry: Entry) {
+        entryRepository.delete(entry)
+    }
 
     private fun Rule.isDue(date: LocalDate): Boolean {
         if (start > date) return false
