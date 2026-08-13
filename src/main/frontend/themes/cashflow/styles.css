@@ -21,6 +21,10 @@ vaadin-grid::part(header-row) {
     font-weight: bold;
 }
 
+vaadin-grid::part(selected-header-row) {
+    background: var(--lumo-primary-color-50pct);
+}
+
 .alert {
     display: flex;
     align-items: center;

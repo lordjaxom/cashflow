@@ -2,6 +2,7 @@ package de.akvsoft.cashflow.frontend.usecase.calculate
 
 import com.vaadin.flow.spring.annotation.VaadinSessionScope
 import de.akvsoft.cashflow.backend.database.BalanceRepository
+import de.akvsoft.cashflow.backend.database.Balance
 import de.akvsoft.cashflow.backend.database.Entry
 import de.akvsoft.cashflow.backend.database.EntryRepository
 import de.akvsoft.cashflow.backend.database.EntryType
@@ -10,6 +11,7 @@ import de.akvsoft.cashflow.backend.database.RuleRepository
 import de.akvsoft.cashflow.backend.database.ScheduleFrequency
 import de.akvsoft.cashflow.frontend.util.formatDate
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
@@ -73,6 +75,31 @@ class CalculateService(
         entryRepository.delete(entry)
     }
 
+    @Transactional
+    fun squash(month: YearMonth): SquashResult {
+        val anchor = month.atDay(1)
+        val balance = balanceAtStartOfMonth(month)
+            ?: throw IllegalArgumentException("Für ${month.formatDate()} kann kein Saldo berechnet werden.")
+
+        val existingBalance = balanceRepository.findFirstByMonth(anchor)
+        if (existingBalance == null) {
+            balanceRepository.save(Balance(anchor, balance))
+        } else {
+            existingBalance.balance = balance
+            balanceRepository.save(existingBalance)
+        }
+
+        val deletedEntries = entryRepository.deleteByDateBefore(anchor)
+        return SquashResult(anchor, balance, deletedEntries)
+    }
+
+    fun balanceAtStartOfMonth(month: YearMonth): BigDecimal? =
+        calculate(month.atDay(1))
+            .asSequence()
+            .filterIsInstance<MonthHeader>()
+            .firstOrNull { it.month == month }
+            ?.balance
+
     private fun Rule.isDue(date: LocalDate): Boolean {
         if (start > date) return false
         if (end?.let { it < date } == true) return false
@@ -122,7 +149,7 @@ sealed interface Row {
 }
 
 class MonthHeader(
-    month: YearMonth,
+    val month: YearMonth,
     override val balance: BigDecimal
 ) : Row {
     override val formattedDate = month.formatDate()
@@ -142,3 +169,9 @@ class Calculation(
 ) : Row {
     override val formattedDate = date.formatDate()
 }
+
+class SquashResult(
+    val anchor: LocalDate,
+    val balance: BigDecimal,
+    val deletedEntries: Int
+)

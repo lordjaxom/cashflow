@@ -1,7 +1,9 @@
 package de.akvsoft.cashflow.frontend.usecase.calculate
 
 import com.vaadin.flow.component.Text
+import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.button.ButtonVariant
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog
 import com.vaadin.flow.component.datepicker.DatePicker
 import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.grid.GridVariant
@@ -27,6 +29,7 @@ import de.akvsoft.cashflow.frontend.util.formatCurrency
 import de.akvsoft.cashflow.frontend.util.formatDate
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.YearMonth
 
 
 @Route("calculate")
@@ -38,6 +41,7 @@ class CalculateView(
     private val dateText: Text
     private val balanceText: Text
     private val grid: Grid<Row>
+    private val squashButton: Button
 
     init {
         setHeightFull()
@@ -86,8 +90,13 @@ class CalculateView(
 
                 button("Löschen") {
                     addThemeVariants(ButtonVariant.LUMO_ERROR)
-                    style.setMarginInlineEnd("auto")
                     addClickListener { deleteEntry() }
+                }
+                squashButton = button("Verdichten") {
+                    addThemeVariants(ButtonVariant.LUMO_ERROR)
+                    isEnabled = false
+                    style.setMarginInlineEnd("auto")
+                    addClickListener { confirmSquash() }
                 }
                 button("Hinzufügen") {
                     addClickListener { EntryDialog { entry -> service.saveEntry(entry) }.open(service.createEntry()) }
@@ -139,7 +148,18 @@ class CalculateView(
                     flexGrow = 0
                 }
 
-                setPartNameGenerator { if (it is MonthHeader) "header-row" else null }
+                setPartNameGenerator {
+                    if (it is MonthHeader) {
+                        listOfNotNull(
+                            "header-row",
+                            if (selectedItems.contains(it)) "selected-header-row" else null
+                        ).joinToString(" ")
+                    } else null
+                }
+                addSelectionListener {
+                    squashButton.isEnabled = selectedMonth() != null
+                    dataProvider.refreshAll()
+                }
             }
         }
 
@@ -170,6 +190,30 @@ class CalculateView(
         service.deleteEntry(entry)
         calculate()
     }
+
+    private fun confirmSquash() {
+        val month = selectedMonth() ?: return
+        val anchor = month.atDay(1)
+        val balance = service.balanceAtStartOfMonth(month) ?: return
+
+        ConfirmDialog(
+            "Projektion verdichten",
+            "Der Saldo per ${anchor.formatDate()} (${balance.formatCurrency()}) wird gespeichert. " +
+                "Alle Einträge vor diesem Datum werden dauerhaft gelöscht.",
+            "Verdichten",
+            {
+                service.squash(month)
+                calculate()
+            },
+            "Abbrechen",
+            {}
+        ).apply {
+            setConfirmButtonTheme("error primary")
+            open()
+        }
+    }
+
+    private fun selectedMonth(): YearMonth? = (grid.selectedItems.firstOrNull() as? MonthHeader)?.month
 
     private fun EntryType.toComponent() = root {
         span(toDisplayString()) {
