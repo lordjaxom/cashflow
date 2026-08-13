@@ -57,11 +57,19 @@ class CalculateView(
                 style.setFontWeight(Style.FontWeight.BOLD)
             }
             datePicker = datePicker {
-                value = LocalDate.now().plusMonths(3)
-                addValueChangeListener { calculate() }
+                value = service.loadDeadline()
+                addValueChangeListener {
+                    val deadline = it.value ?: return@addValueChangeListener
+                    service.saveDeadline(deadline)
+                    calculate()
+                }
             }
             button("Berechnen") {
-                addClickListener { calculate() }
+                addClickListener {
+                    val deadline = datePicker.value ?: return@addClickListener
+                    service.saveDeadline(deadline)
+                    calculate()
+                }
             }
         }
         div {
@@ -167,8 +175,9 @@ class CalculateView(
     }
 
     private fun calculate() {
-        val items = service.calculate(datePicker.value)
-        dateText.text = datePicker.value.formatDate()
+        val deadline = datePicker.value ?: return
+        val items = service.calculate(deadline)
+        dateText.text = deadline.formatDate()
         if (!items.isEmpty()) {
             balanceText.text = items.asSequence().filterIsInstance<Calculation>().last().balance.formatCurrency()
         }

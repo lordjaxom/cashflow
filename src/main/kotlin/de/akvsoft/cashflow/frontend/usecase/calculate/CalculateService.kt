@@ -1,6 +1,8 @@
 package de.akvsoft.cashflow.frontend.usecase.calculate
 
 import com.vaadin.flow.spring.annotation.VaadinSessionScope
+import de.akvsoft.cashflow.backend.database.AppSetting
+import de.akvsoft.cashflow.backend.database.AppSettingRepository
 import de.akvsoft.cashflow.backend.database.BalanceRepository
 import de.akvsoft.cashflow.backend.database.Balance
 import de.akvsoft.cashflow.backend.database.Entry
@@ -22,7 +24,8 @@ import java.time.temporal.ChronoUnit
 class CalculateService(
     private val entryRepository: EntryRepository,
     private val ruleRepository: RuleRepository,
-    private val balanceRepository: BalanceRepository
+    private val balanceRepository: BalanceRepository,
+    private val appSettingRepository: AppSettingRepository
 ) {
 
     fun calculate(deadline: LocalDate): List<Row> {
@@ -73,6 +76,22 @@ class CalculateService(
 
     fun deleteEntry(entry: Entry) {
         entryRepository.delete(entry)
+    }
+
+    fun loadDeadline(): LocalDate =
+        appSettingRepository.findByKey(DEADLINE_SETTING_KEY)
+            ?.value
+            ?.let { LocalDate.parse(it) }
+            ?: LocalDate.now().plusMonths(3)
+
+    fun saveDeadline(deadline: LocalDate) {
+        val setting = appSettingRepository.findByKey(DEADLINE_SETTING_KEY)
+        if (setting == null) {
+            appSettingRepository.save(AppSetting(DEADLINE_SETTING_KEY, deadline.toString()))
+        } else {
+            setting.value = deadline.toString()
+            appSettingRepository.save(setting)
+        }
     }
 
     @Transactional
@@ -175,3 +194,5 @@ class SquashResult(
     val balance: BigDecimal,
     val deletedEntries: Int
 )
+
+private const val DEADLINE_SETTING_KEY = "calculate.deadline"
