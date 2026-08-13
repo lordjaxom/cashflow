@@ -11,7 +11,7 @@ import java.time.LocalDate
 class RulesService(
     private val ruleRepository: RuleRepository
 ) {
-    fun findAll(): List<Rule> = ruleRepository.findAllByOrderByStartAsc()
+    fun findAll(): List<Rule> = ruleRepository.findAllByOrderByNameAsc()
 
     fun create(): Rule = Rule(
         name = "",

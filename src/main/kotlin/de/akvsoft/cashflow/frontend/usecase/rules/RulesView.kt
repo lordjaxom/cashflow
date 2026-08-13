@@ -1,9 +1,12 @@
 package de.akvsoft.cashflow.frontend.usecase.rules
 
 import com.vaadin.flow.component.grid.Grid
+import com.vaadin.flow.component.grid.GridSortOrder
 import com.vaadin.flow.component.grid.GridVariant
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
+import com.vaadin.flow.data.provider.ListDataProvider
+import com.vaadin.flow.data.provider.SortDirection
 import com.vaadin.flow.router.Route
 import de.akvsoft.cashflow.backend.database.Rule
 import de.akvsoft.cashflow.backend.database.toDisplayString
@@ -21,6 +24,7 @@ class RulesView(
 ) : VerticalLayout() {
 
     private val ruleGrid: Grid<Rule>
+    private val dataProvider = ListDataProvider<Rule>(mutableListOf())
 
     init {
         setHeightFull()
@@ -44,8 +48,10 @@ class RulesView(
             setSizeFull()
             addThemeVariants(GridVariant.LUMO_ROW_STRIPES)
 
-            textColumn(Rule::name) {
+            val nameColumn = textColumn(Rule::name) {
                 setHeader("Name")
+                setComparator(Rule::name)
+                isSortable = true
                 flexGrow = 1
             }
             textColumn( {  it.type.toDisplayString() }) {
@@ -66,6 +72,8 @@ class RulesView(
             }
             textColumn( { it.start.formatDate()}) {
                 setHeader("Beginn")
+                setComparator(Rule::start)
+                isSortable = true
                 width = "120px"
                 flexGrow = 0
             }
@@ -83,11 +91,16 @@ class RulesView(
             addItemDoubleClickListener { event ->
                 RuleDialog(service) { reload() }.open(event.item)
             }
+
+            setItems(this@RulesView.dataProvider)
+            sort(listOf(GridSortOrder(nameColumn, SortDirection.ASCENDING)))
         }
         reload()
     }
 
     private fun reload() {
-        ruleGrid.setItems(service.findAll())
+        dataProvider.items.clear()
+        dataProvider.items.addAll(service.findAll())
+        dataProvider.refreshAll()
     }
 }

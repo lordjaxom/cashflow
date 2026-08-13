@@ -7,5 +7,5 @@ import java.util.UUID
 @Repository
 interface RuleRepository : JpaRepository<Rule, UUID> {
 
-    fun findAllByOrderByStartAsc(): List<Rule>
+    fun findAllByOrderByNameAsc(): List<Rule>
 }
