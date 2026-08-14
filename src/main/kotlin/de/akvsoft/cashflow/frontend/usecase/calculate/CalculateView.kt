@@ -209,7 +209,7 @@ class CalculateView(
             "Projektion verdichten",
             "Der Saldo per ${anchor.formatDate()} (${balance.formatCurrency()}) wird gespeichert. " +
                 "Alle Einträge vor diesem Datum werden dauerhaft gelöscht.",
-            "Verdichten",
+            "Abschließen",
             {
                 service.squash(month)
                 calculate()

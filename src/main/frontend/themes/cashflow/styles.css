@@ -22,7 +22,7 @@ vaadin-grid::part(header-row) {
 }
 
 vaadin-grid::part(selected-header-row) {
-    background: var(--lumo-primary-color-50pct);
+    background: var(--lumo-primary-color-10pct);
 }
 
 .alert {
