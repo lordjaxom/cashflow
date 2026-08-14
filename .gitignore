@@ -5,16 +5,7 @@ target/
 /work/
 
 ### IntelliJ IDEA ###
-.idea/.copilot-plugin
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/kotlinc.xml
-.idea/dataSources.xml
-.idea/diff-generator.xml
-.idea/jpa-buddy-datasource.xml
-.idea/libraries/
-.idea/inspectionProfiles/
+.idea/
 *.iws
 *.iml
 *.ipr

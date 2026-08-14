@@ -11,7 +11,8 @@ import java.time.LocalDate
 @VaadinSessionScope
 class RulesService(
     private val ruleRepository: RuleRepository,
-    private val entryRepository: EntryRepository
+    private val entryRepository: EntryRepository,
+    private val balanceRepository: BalanceRepository
 ) {
     fun findAll(): List<Rule> = ruleRepository.findAllByOrderByNameAsc()
 
@@ -51,7 +52,12 @@ class RulesService(
         return "$every $freqs"
     }
 
-    private fun findPurgeableRules(): List<Rule> =
-        ruleRepository.findAllByEndBefore(LocalDate.now())
+    private fun findPurgeableRules(): List<Rule> {
+        val currentBalanceStart = currentBalanceStart() ?: return emptyList()
+        return ruleRepository.findAllByEndBefore(currentBalanceStart)
             .filterNot { entryRepository.existsByRuleId(it.id) }
+    }
+
+    private fun currentBalanceStart(): LocalDate? =
+        balanceRepository.findFirstByOrderByMonthDesc()?.month?.withDayOfMonth(1)
 }
