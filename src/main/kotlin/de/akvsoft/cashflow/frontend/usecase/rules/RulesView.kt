@@ -1,5 +1,7 @@
 package de.akvsoft.cashflow.frontend.usecase.rules
 
+import com.vaadin.flow.component.button.ButtonVariant
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog
 import com.vaadin.flow.component.grid.Grid
 import com.vaadin.flow.component.grid.GridSortOrder
 import com.vaadin.flow.component.grid.GridVariant
@@ -37,6 +39,11 @@ class RulesView(
             justifyContentMode = FlexComponent.JustifyContentMode.END
             setWidthFull()
 
+            button("Bereinigen") {
+                addThemeVariants(ButtonVariant.LUMO_ERROR)
+                addClickListener { confirmPurge() }
+                style.setMarginInlineEnd("auto")
+            }
             button("Hinzufügen") {
                 addClickListener {
                     RuleDialog(service) { reload() }.open(service.create())
@@ -102,5 +109,23 @@ class RulesView(
         dataProvider.items.clear()
         dataProvider.items.addAll(service.findAll())
         dataProvider.refreshAll()
+    }
+
+    private fun confirmPurge() {
+        val purgeableRules = service.countPurgeableRules()
+        ConfirmDialog(
+            "Abgelaufene Regeln löschen",
+            "Es werden $purgeableRules abgelaufene Regeln gelöscht, die von keinem Eintrag referenziert werden.",
+            "Bereinigen",
+            {
+                service.purgeExpiredRules()
+                reload()
+            },
+            "Abbrechen",
+            {}
+        ).apply {
+            setConfirmButtonTheme("error primary")
+            open()
+        }
     }
 }
