@@ -12,6 +12,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.data.provider.ListDataProvider
 import com.vaadin.flow.dom.Style
 import com.vaadin.flow.router.Route
+import de.akvsoft.cashflow.backend.database.Entry
 import de.akvsoft.cashflow.backend.database.EntryType
 import de.akvsoft.cashflow.backend.database.toDisplayString
 import de.akvsoft.cashflow.frontend.components.button
@@ -41,6 +42,7 @@ class CalculateView(
     private val dateText: Text
     private val balanceText: Text
     private val grid: Grid<Row>
+    private val deleteButton: Button
     private val squashButton: Button
 
     init {
@@ -96,7 +98,7 @@ class CalculateView(
                 justifyContentMode = FlexComponent.JustifyContentMode.END
                 setWidthFull()
 
-                button("Löschen") {
+                deleteButton = button("Löschen") {
                     addThemeVariants(ButtonVariant.LUMO_ERROR)
                     addClickListener { deleteEntry() }
                 }
@@ -165,7 +167,8 @@ class CalculateView(
                     } else null
                 }
                 addSelectionListener {
-                    squashButton.isEnabled = selectedMonth() != null
+                    deleteButton.isEnabled = selectedCalculation() != null
+                    squashButton.isEnabled = selectedMonthHeader() != null
                     dataProvider.refreshAll()
                 }
             }
@@ -186,6 +189,7 @@ class CalculateView(
 
     private fun editEntry(item: Row) {
         if (item !is Calculation) return;
+        if (item.entry?.locked == true) return
         val dialog = EntryDialog { service.saveEntry(it); calculate() }
         if (item.rule != null && item.entry == null) {
             dialog.openForRule(item.rule, item.date)
@@ -196,12 +200,13 @@ class CalculateView(
 
     private fun deleteEntry() {
         val entry = (grid.selectedItems.firstOrNull() as? Calculation)?.entry ?: return
+        if (entry.locked) return
         service.deleteEntry(entry)
         calculate()
     }
 
     private fun confirmSquash() {
-        val month = selectedMonth() ?: return
+        val month = selectedMonthHeader()?.month ?: return
         val anchor = month.atDay(1)
         val balance = service.balanceAtStartOfMonth(month) ?: return
 
@@ -222,7 +227,9 @@ class CalculateView(
         }
     }
 
-    private fun selectedMonth(): YearMonth? = (grid.selectedItems.firstOrNull() as? MonthHeader)?.month
+    private fun selectedCalculation(): Calculation? = grid.selectedItems.firstOrNull() as? Calculation
+
+    private fun selectedMonthHeader(): MonthHeader? = grid.selectedItems.firstOrNull() as? MonthHeader
 
     private fun EntryType.toComponent() = root {
         span(toDisplayString()) {
@@ -240,6 +247,7 @@ class CalculateView(
 
     private fun Row.formatSource() = when {
         this !is Calculation -> ""
+        entry?.locked == true -> "Bucket"
         entry != null && rule != null -> "Override"
         entry != null -> "Eintrag"
         else -> "Regel"

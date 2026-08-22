@@ -25,6 +25,9 @@ class Entry(
     @Column
     var name: String?,
 
+    @Column(nullable = false)
+    var locked: Boolean = false,
+
     @Id
     val id: UUID = UUID.randomUUID()
 )

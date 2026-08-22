@@ -75,6 +75,7 @@ class CalculateService(
     }
 
     fun deleteEntry(entry: Entry) {
+        require(!entry.locked) { "Dieser Eintrag kann nicht gelöscht werden." }
         entryRepository.delete(entry)
     }
 
@@ -118,6 +119,9 @@ class CalculateService(
             .filterIsInstance<MonthHeader>()
             .firstOrNull { it.month == month }
             ?.balance
+
+    fun balanceAt(deadline: LocalDate): BigDecimal? =
+        calculate(deadline).lastOrNull()?.balance
 
     private fun Rule.isDue(date: LocalDate): Boolean {
         if (start > date) return false
