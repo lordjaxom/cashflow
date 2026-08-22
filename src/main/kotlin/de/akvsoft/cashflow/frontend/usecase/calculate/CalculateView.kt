@@ -44,6 +44,7 @@ class CalculateView(
     private val grid: Grid<Row>
     private val deleteButton: Button
     private val squashButton: Button
+    private var rows: List<Row> = emptyList()
 
     init {
         setHeightFull()
@@ -100,6 +101,7 @@ class CalculateView(
 
                 deleteButton = button("Löschen") {
                     addThemeVariants(ButtonVariant.LUMO_ERROR)
+                    isEnabled = false
                     addClickListener { deleteEntry() }
                 }
                 squashButton = button("Verdichten") {
@@ -167,8 +169,8 @@ class CalculateView(
                     } else null
                 }
                 addSelectionListener {
-                    deleteButton.isEnabled = selectedCalculation() != null
-                    squashButton.isEnabled = selectedMonthHeader() != null
+                    deleteButton.isEnabled = selectedCalculation()?.deletableEntry() != null
+                    squashButton.isEnabled = selectedMonthHeader()?.squashableMonth() != null
                     dataProvider.refreshAll()
                 }
             }
@@ -180,8 +182,9 @@ class CalculateView(
     private fun calculate() {
         val deadline = datePicker.value ?: return
         val items = service.calculate(deadline)
+        rows = items
         dateText.text = deadline.formatDate()
-        if (!items.isEmpty()) {
+        if (items.isNotEmpty()) {
             balanceText.text = items.asSequence().filterIsInstance<Calculation>().last().balance.formatCurrency()
         }
         grid.setItems(ListDataProvider(items))
@@ -199,14 +202,13 @@ class CalculateView(
     }
 
     private fun deleteEntry() {
-        val entry = (grid.selectedItems.firstOrNull() as? Calculation)?.entry ?: return
-        if (entry.locked) return
+        val entry = selectedCalculation()?.deletableEntry() ?: return
         service.deleteEntry(entry)
         calculate()
     }
 
     private fun confirmSquash() {
-        val month = selectedMonthHeader()?.month ?: return
+        val month = selectedMonthHeader()?.squashableMonth() ?: return
         val anchor = month.atDay(1)
         val balance = service.balanceAtStartOfMonth(month) ?: return
 
@@ -230,6 +232,12 @@ class CalculateView(
     private fun selectedCalculation(): Calculation? = grid.selectedItems.firstOrNull() as? Calculation
 
     private fun selectedMonthHeader(): MonthHeader? = grid.selectedItems.firstOrNull() as? MonthHeader
+
+    private fun Calculation.deletableEntry() =
+        entry?.takeIf { !it.locked }
+
+    private fun MonthHeader.squashableMonth() =
+        if (this != rows.firstOrNull()) month else null
 
     private fun EntryType.toComponent() = root {
         span(toDisplayString()) {
