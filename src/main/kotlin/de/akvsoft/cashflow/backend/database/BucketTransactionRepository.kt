@@ -6,7 +6,9 @@ import java.util.UUID
 
 @Repository
 interface BucketTransactionRepository : JpaRepository<BucketTransaction, UUID> {
-    fun findAllByBucketOrderByDateAsc(bucket: Bucket): List<BucketTransaction>
+    fun findAllByBucketOrderByCreatedAtAsc(bucket: Bucket): List<BucketTransaction>
+
+    fun findFirstByBucketOrderByCreatedAtDesc(bucket: Bucket): BucketTransaction?
 
     fun deleteAllByBucket(bucket: Bucket)
 }

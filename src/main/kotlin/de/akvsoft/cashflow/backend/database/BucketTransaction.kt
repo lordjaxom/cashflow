@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.ManyToOne
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 
@@ -27,6 +28,9 @@ class BucketTransaction(
 
     @Column(nullable = false)
     var projectionEntryId: UUID,
+
+    @Column(nullable = false)
+    var createdAt: Instant = Instant.now(),
 
     @Id
     val id: UUID = UUID.randomUUID()

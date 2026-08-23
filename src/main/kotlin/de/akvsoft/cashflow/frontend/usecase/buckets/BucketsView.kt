@@ -44,6 +44,7 @@ class BucketsView(
     private val selectedBucketText: Span
     private val addButton: Button
     private val removeButton: Button
+    private val revertButton: Button
     private val deleteButton: Button
 
     init {
@@ -120,11 +121,11 @@ class BucketsView(
                         style.setFontWeight(Style.FontWeight.BOLD)
                         style.setMarginInlineEnd("auto")
                     }
-                    addButton = button("Geld parken") {
+                    addButton = button("Parken") {
                         isEnabled = false
                         addClickListener {
                             val bucket = selectedBucket() ?: return@addClickListener
-                            MoneyDialog("Geld parken") { date, amount ->
+                            MoneyDialog("Parken") { date, amount ->
                                 runAction {
                                     service.addMoney(bucket, date, amount)
                                     reload()
@@ -132,17 +133,22 @@ class BucketsView(
                             }.open()
                         }
                     }
-                    removeButton = button("Geld entparken") {
+                    removeButton = button("Entparken") {
                         isEnabled = false
                         addClickListener {
                             val bucket = selectedBucket() ?: return@addClickListener
-                            MoneyDialog("Geld entparken") { date, amount ->
+                            MoneyDialog("Entparken") { date, amount ->
                                 runAction {
                                     service.removeMoney(bucket, date, amount)
                                     reload()
                                 }
                             }.open()
                         }
+                    }
+                    revertButton = button("Rückgängig") {
+                        isEnabled = false
+                        addThemeVariants(ButtonVariant.LUMO_ERROR)
+                        addClickListener { confirmRevertTransaction() }
                     }
                     deleteButton = button("Bucket löschen") {
                         isEnabled = false
@@ -176,6 +182,7 @@ class BucketsView(
                         flexGrow = 0
                     }
 
+                    addSelectionListener { updateActionButtons() }
                     setItems(transactionProvider)
                 }
             }
@@ -205,15 +212,29 @@ class BucketsView(
         removeButton.isEnabled = summary?.balance?.let { it > BigDecimal.ZERO } == true
         deleteButton.isEnabled = summary?.balance?.compareTo(BigDecimal.ZERO) == 0
 
+        transactionGrid.deselectAll()
         transactionProvider.items.clear()
         if (bucket != null) {
             transactionProvider.items.addAll(service.findTransactions(bucket))
         }
         transactionProvider.refreshAll()
+        updateActionButtons()
     }
 
     private fun selectedBucket(): Bucket? =
         bucketGrid.selectedItems.firstOrNull()?.bucket
+
+    private fun selectedTransaction(): BucketTransaction? =
+        transactionGrid.selectedItems.firstOrNull()
+
+    private fun updateActionButtons() {
+        val summary = bucketGrid.selectedItems.firstOrNull()
+        val bucket = summary?.bucket
+        addButton.isEnabled = bucket != null
+        removeButton.isEnabled = summary?.balance?.let { it > BigDecimal.ZERO } == true
+        deleteButton.isEnabled = summary?.balance?.compareTo(BigDecimal.ZERO) == 0
+        revertButton.isEnabled = selectedTransaction()?.let { service.canRevert(it) } == true
+    }
 
     private fun confirmDeleteBucket() {
         val bucket = selectedBucket() ?: return
@@ -224,6 +245,28 @@ class BucketsView(
             {
                 runAction {
                     service.deleteBucket(bucket)
+                    reload()
+                }
+            },
+            "Abbrechen",
+            {}
+        ).apply {
+            setConfirmButtonTheme("error primary")
+            open()
+        }
+    }
+
+    private fun confirmRevertTransaction() {
+        val transaction = selectedTransaction() ?: return
+        if (!service.canRevert(transaction)) return
+
+        ConfirmDialog(
+            "Transaktion rückgängig machen",
+            "Die letzte Transaktion über ${transaction.amount.formatCurrency()} und der zugehörige Projektionseintrag werden gelöscht.",
+            "Rückgängig machen",
+            {
+                runAction {
+                    service.revertTransaction(transaction)
                     reload()
                 }
             },

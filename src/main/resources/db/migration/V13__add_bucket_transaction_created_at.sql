@@ -1,0 +1,2 @@
+ALTER TABLE bucket_transaction
+    ADD created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL;

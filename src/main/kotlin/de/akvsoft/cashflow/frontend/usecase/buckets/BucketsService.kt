@@ -29,7 +29,10 @@ class BucketsService(
             .map { BucketSummary(it, balance(it)) }
 
     fun findTransactions(bucket: Bucket): List<BucketTransaction> =
-        transactionRepository.findAllByBucketOrderByDateAsc(bucket)
+        transactionRepository.findAllByBucketOrderByCreatedAtAsc(bucket)
+
+    fun canRevert(transaction: BucketTransaction): Boolean =
+        transactionRepository.findFirstByBucketOrderByCreatedAtDesc(transaction.bucket)?.id == transaction.id
 
     fun availableBalance(): BigDecimal =
         calculateService.balanceAt(LocalDate.now()) ?: BigDecimal.ZERO
@@ -47,11 +50,18 @@ class BucketsService(
         val balance = balance(bucket)
         require(balance.compareTo(BigDecimal.ZERO) == 0) { "Nur leere Buckets können gelöscht werden." }
 
-        transactionRepository.findAllByBucketOrderByDateAsc(bucket)
+        transactionRepository.findAllByBucketOrderByCreatedAtAsc(bucket)
             .map { it.projectionEntryId }
             .forEach { entryRepository.findById(it).ifPresent(entryRepository::delete) }
         transactionRepository.deleteAllByBucket(bucket)
         bucketRepository.delete(bucket)
+    }
+
+    @Transactional
+    fun revertTransaction(transaction: BucketTransaction) {
+        require(canRevert(transaction)) { "Nur die letzte Transaktion eines Buckets kann rückgängig gemacht werden." }
+        entryRepository.findById(transaction.projectionEntryId).ifPresent(entryRepository::delete)
+        transactionRepository.delete(transaction)
     }
 
     @Transactional
@@ -103,7 +113,7 @@ class BucketsService(
     }
 
     private fun balance(bucket: Bucket): BigDecimal =
-        transactionRepository.findAllByBucketOrderByDateAsc(bucket)
+        transactionRepository.findAllByBucketOrderByCreatedAtAsc(bucket)
             .fold(BigDecimal.ZERO) { sum, transaction -> sum + transaction.amount }
 }
 
