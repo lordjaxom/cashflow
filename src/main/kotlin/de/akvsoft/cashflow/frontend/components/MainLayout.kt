@@ -24,7 +24,7 @@ class MainLayout : AppLayout() {
 
         val sideNav = SideNav()
         sideNav.addItem(SideNavItem("Projektion", "calculate"))
-        sideNav.addItem(SideNavItem("Buckets", "buckets"))
+        sideNav.addItem(SideNavItem("Rücklagen", "buckets"))
         sideNav.addItem(SideNavItem("Regeln", "rules"))
 
         val scroller = Scroller(sideNav)

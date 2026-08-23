@@ -37,18 +37,21 @@ class BucketsService(
     fun availableBalance(): BigDecimal =
         calculateService.balanceAt(LocalDate.now()) ?: BigDecimal.ZERO
 
+    fun totalBalance(): BigDecimal =
+        bucketRepository.findAll().fold(BigDecimal.ZERO) { sum, bucket -> sum + balance(bucket) }
+
     @Transactional
     fun createBucket(name: String): Bucket {
         val trimmedName = name.trim()
         require(trimmedName.isNotEmpty()) { "Name ist erforderlich." }
-        require(!bucketRepository.existsByNameIgnoreCase(trimmedName)) { "Ein Bucket mit diesem Namen existiert bereits." }
+        require(!bucketRepository.existsByNameIgnoreCase(trimmedName)) { "Eine Rücklage mit diesem Namen existiert bereits." }
         return bucketRepository.save(Bucket(trimmedName))
     }
 
     @Transactional
     fun deleteBucket(bucket: Bucket) {
         val balance = balance(bucket)
-        require(balance.compareTo(BigDecimal.ZERO) == 0) { "Nur leere Buckets können gelöscht werden." }
+        require(balance.compareTo(BigDecimal.ZERO) == 0) { "Nur leere Rücklagen können gelöscht werden." }
 
         transactionRepository.deleteAllByBucket(bucket)
         bucketRepository.delete(bucket)
@@ -56,7 +59,7 @@ class BucketsService(
 
     @Transactional
     fun revertTransaction(transaction: BucketTransaction) {
-        require(canRevert(transaction)) { "Nur die letzte Transaktion eines Buckets kann rückgängig gemacht werden." }
+        require(canRevert(transaction)) { "Nur die letzte Transaktion einer Rücklage kann rückgängig gemacht werden." }
         entryRepository.findById(transaction.projectionEntryId).ifPresent(entryRepository::delete)
         transactionRepository.delete(transaction)
     }
@@ -71,7 +74,7 @@ class BucketsService(
     @Transactional
     fun removeMoney(bucket: Bucket, date: LocalDate, amount: BigDecimal) {
         requirePositive(amount)
-        require(amount <= balance(bucket)) { "Der Betrag überschreitet den Bucket-Saldo." }
+        require(amount <= balance(bucket)) { "Der Betrag überschreitet den Rücklagen-Saldo." }
         createTransaction(bucket, date, amount.negate(), BucketTransactionType.REMOVE)
     }
 

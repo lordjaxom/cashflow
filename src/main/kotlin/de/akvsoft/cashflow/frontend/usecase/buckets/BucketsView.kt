@@ -93,13 +93,13 @@ class BucketsView(
             }
 
             bucketGrid = grid<BucketSummary> {
-                emptyStateText = "Keine Buckets vorhanden"
+                emptyStateText = "Keine Rücklagen vorhanden"
                 setWidthFull()
                 height = "12em"
                 addThemeVariants(GridVariant.LUMO_ROW_STRIPES)
 
                 textColumn({ it.bucket.name }) {
-                    setHeader("Bucket")
+                    setHeader("Rücklage")
                     flexGrow = 1
                 }
                 textColumn({ it.balance.formatCurrency() }) {
@@ -239,8 +239,8 @@ class BucketsView(
     private fun confirmDeleteBucket() {
         val bucket = selectedBucket() ?: return
         ConfirmDialog(
-            "Bucket löschen",
-            "Der leere Bucket '${bucket.name}' und seine Transaktionen werden dauerhaft gelöscht.",
+            "Rücklage löschen",
+            "Die leere Rücklage '${bucket.name}' und ihre Transaktionen werden dauerhaft gelöscht.",
             "Löschen",
             {
                 runAction {
@@ -296,7 +296,7 @@ private class BucketNameDialog(
     }
 
     init {
-        headerTitle = "Bucket erstellen"
+        headerTitle = "Rücklage erstellen"
         add(name)
         footer.add(
             HorizontalLayout(

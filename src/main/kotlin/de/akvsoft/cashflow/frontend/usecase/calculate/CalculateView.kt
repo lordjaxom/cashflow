@@ -26,6 +26,7 @@ import de.akvsoft.cashflow.frontend.components.root
 import de.akvsoft.cashflow.frontend.components.span
 import de.akvsoft.cashflow.frontend.components.text
 import de.akvsoft.cashflow.frontend.components.verticalLayout
+import de.akvsoft.cashflow.frontend.usecase.buckets.BucketsService
 import de.akvsoft.cashflow.frontend.util.formatCurrency
 import de.akvsoft.cashflow.frontend.util.formatDate
 import java.math.BigDecimal
@@ -35,12 +36,15 @@ import java.time.YearMonth
 
 @Route("calculate")
 class CalculateView(
-    private val service: CalculateService
+    private val service: CalculateService,
+    private val bucketsService: BucketsService
 ) : VerticalLayout() {
 
     private val datePicker: DatePicker
+    private val availableBalanceText: Text
     private val dateText: Text
     private val balanceText: Text
+    private val reservesText: Text
     private val grid: Grid<Row>
     private val deleteButton: Button
     private val squashButton: Button
@@ -78,15 +82,45 @@ class CalculateView(
         div {
             setWidthFull()
             addClassNames("alert", "info")
-            span {
-                text("Voraussichtlicher Saldo am ")
-                dateText = text("Stichtag")
-                text(":")
-                style.setFontWeight(Style.FontWeight.BOLD)
+            style.set("flex-direction", "column")
+            style.set("align-items", "stretch")
+            horizontalLayout {
+                setWidthFull()
+                justifyContentMode = FlexComponent.JustifyContentMode.BETWEEN
+                span {
+                    text("Verfügbarer Saldo per ${LocalDate.now().formatDate()}:")
+                    style.setFontWeight(Style.FontWeight.BOLD)
+                }
+                span {
+                    availableBalanceText = text(BigDecimal.ZERO.formatCurrency())
+                    style.setFontSize("1.25em")
+                }
             }
-            span {
-                balanceText = text(BigDecimal.ZERO.formatCurrency())
-                style.setFontSize("1.25em")
+            horizontalLayout {
+                setWidthFull()
+                justifyContentMode = FlexComponent.JustifyContentMode.BETWEEN
+                span {
+                    text("Voraussichtlicher Saldo am ")
+                    dateText = text("Stichtag")
+                    text(":")
+                    style.setFontWeight(Style.FontWeight.BOLD)
+                }
+                span {
+                    balanceText = text(BigDecimal.ZERO.formatCurrency())
+                    style.setFontSize("1.25em")
+                }
+            }
+            horizontalLayout {
+                setWidthFull()
+                justifyContentMode = FlexComponent.JustifyContentMode.BETWEEN
+                span {
+                    text("Rücklagen:")
+                    style.setFontWeight(Style.FontWeight.BOLD)
+                }
+                span {
+                    reservesText = text(BigDecimal.ZERO.formatCurrency())
+                    style.setFontSize("1.25em")
+                }
             }
         }
         verticalLayout {
@@ -183,7 +217,9 @@ class CalculateView(
         val deadline = datePicker.value ?: return
         val items = service.calculate(deadline)
         rows = items
+        availableBalanceText.text = (service.balanceAt(LocalDate.now()) ?: BigDecimal.ZERO).formatCurrency()
         dateText.text = deadline.formatDate()
+        reservesText.text = bucketsService.totalBalance().formatCurrency()
         if (items.isNotEmpty()) {
             balanceText.text = items.asSequence().filterIsInstance<Calculation>().last().balance.formatCurrency()
         }
@@ -255,7 +291,7 @@ class CalculateView(
 
     private fun Row.formatSource() = when {
         this !is Calculation -> ""
-        entry?.locked == true -> "Bucket"
+        entry?.locked == true -> "Rücklage"
         entry != null && rule != null -> "Override"
         entry != null -> "Eintrag"
         else -> "Regel"
