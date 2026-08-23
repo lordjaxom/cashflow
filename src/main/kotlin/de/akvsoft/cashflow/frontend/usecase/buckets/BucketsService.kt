@@ -50,9 +50,6 @@ class BucketsService(
         val balance = balance(bucket)
         require(balance.compareTo(BigDecimal.ZERO) == 0) { "Nur leere Buckets können gelöscht werden." }
 
-        transactionRepository.findAllByBucketOrderByCreatedAtAsc(bucket)
-            .map { it.projectionEntryId }
-            .forEach { entryRepository.findById(it).ifPresent(entryRepository::delete) }
         transactionRepository.deleteAllByBucket(bucket)
         bucketRepository.delete(bucket)
     }
@@ -90,10 +87,7 @@ class BucketsService(
                 amount = bucketAmount.negate(),
                 type = EntryType.REAL,
                 rule = null,
-                name = when (type) {
-                    BucketTransactionType.ADD -> "Parken: ${bucket.name}"
-                    BucketTransactionType.REMOVE -> "Entparken: ${bucket.name}"
-                },
+                name = bucket.name,
                 locked = true
             )
         )
