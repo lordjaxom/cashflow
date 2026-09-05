@@ -25,6 +25,9 @@ class Entry(
     @Column
     var name: String?,
 
+    @Column
+    var ruleDate: LocalDate? = null,
+
     @Column(nullable = false)
     var locked: Boolean = false,
 

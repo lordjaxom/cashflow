@@ -29,6 +29,10 @@ class EntryDialog(
     private val name = TextField("Name").apply {
         isRequiredIndicatorVisible = true
     }
+    private val ruleDate = DatePicker("Urspr. Datum").apply {
+        isReadOnly = true
+        isVisible = false
+    }
     private val date = DatePicker("Datum").apply {
         isRequiredIndicatorVisible = true
         value = LocalDate.now()
@@ -49,12 +53,13 @@ class EntryDialog(
         headerTitle = "Eintrag"
 
         val form = FormLayout().apply {
-            add(name, date, amount, type)
+            add(name, ruleDate, date, amount, type)
             setResponsiveSteps(
                 FormLayout.ResponsiveStep("0", 1),
                 FormLayout.ResponsiveStep("600px", 2)
             )
             setColspan(name, 2)
+            setColspan(ruleDate, 2)
         }
         add(form)
 
@@ -63,7 +68,7 @@ class EntryDialog(
             .bind("name")
         binder.forField(date)
             .asRequired("Datum ist erforderlich")
-            .withValidator(DateRangeValidator("Datum darf nicht in der fernen Vergangenheit liegen", LocalDate.of(1970,1,1), null))
+            .withValidator(DateRangeValidator("Datum darf nicht in der fernen Vergangenheit liegen", LocalDate.of(1970, 1, 1), null))
             .bind("date")
         binder.forField(amount)
             .asRequired("Betrag ist erforderlich")
@@ -72,11 +77,14 @@ class EntryDialog(
             .asRequired("Typ ist erforderlich")
             .bind("type")
 
+        date.addValueChangeListener { updateRuleDateVisibility() }
+
         val cancel = Button("Abbrechen") { close() }
         val save = Button("Speichern") {
             try {
                 val bean = current ?: return@Button
                 binder.writeBean(bean)
+                bean.rule?.apply { bean.name = name }
                 onSaved(bean)
                 close()
             } catch (_: ValidationException) {
@@ -92,27 +100,44 @@ class EntryDialog(
     }
 
     fun open(entry: Entry) {
-        // Standard: Eingabefelder normal editierbar
-        name.isReadOnly = false
-        date.isReadOnly = false
         this.current = entry
         binder.readBean(entry)
+        configureRuleFields(entry)
         open()
     }
 
     fun openForRule(rule: Rule, onDate: LocalDate) {
-        // Name/Datum von Rule/CalculateEntry vorgeben und sperren; Typ/Betrag bleiben editierbar
         val entry = Entry(
             date = onDate,
             amount = rule.amount,
             type = rule.type,
             rule = rule,
-            name = rule.name
+            name = rule.name,
+            ruleDate = onDate
         )
-        name.isReadOnly = true
-        date.isReadOnly = true
         this.current = entry
         binder.readBean(entry)
+        configureRuleFields(entry)
         open()
+    }
+
+    private fun configureRuleFields(entry: Entry) {
+        val originalRuleDate = entry.ruleDate
+        if (entry.rule == null) {
+            name.isReadOnly = false
+            ruleDate.isVisible = false
+            ruleDate.clear()
+            return
+        }
+
+        name.value = entry.rule!!.name
+        name.isReadOnly = true
+        ruleDate.value = originalRuleDate
+        updateRuleDateVisibility()
+    }
+
+    private fun updateRuleDateVisibility() {
+        val entry = current ?: return
+        ruleDate.isVisible = entry.rule != null && ruleDate.value != null && ruleDate.value != date.value
     }
 }

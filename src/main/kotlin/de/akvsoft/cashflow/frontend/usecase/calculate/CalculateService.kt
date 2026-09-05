@@ -51,7 +51,7 @@ class CalculateService(
                         .forEach { balance += it.amount; add(it.toCalculation(balance)) }
 
                     rules.asSequence()
-                        .filter { !any { calc -> calc is Calculation && calc.rule?.id == it.id } }
+                        .filter { rule -> entries.none { it.rule?.id == rule.id && it.ruleDate == date } }
                         .filter { it.isDue(date) }
                         .forEach { balance += it.amount; add(it.toCalculation(date, balance)) }
 
@@ -71,6 +71,10 @@ class CalculateService(
     )
 
     fun saveEntry(entry: Entry) {
+        if (entry.rule != null) {
+            entry.ruleDate = entry.ruleDate ?: entry.date
+            entry.name = entry.rule!!.name
+        }
         entryRepository.save(entry)
     }
 
@@ -145,7 +149,7 @@ class CalculateService(
             date = date,
             amount = amount,
             balance = balance,
-            name = name ?: rule!!.name,
+            name = rule?.name ?: name.orEmpty(),
             type = type,
             entry = this,
             rule = rule
