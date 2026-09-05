@@ -12,6 +12,8 @@ interface EntryRepository : JpaRepository<Entry, UUID>{
 
     fun findAllByOrderByDateAsc(): List<Entry>
 
+    fun findAllByRuleId(ruleId: UUID): List<Entry>
+
     fun existsByRuleId(ruleId: UUID): Boolean
 
     @Query("delete from Entry a where a.date < :date")
