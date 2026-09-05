@@ -12,7 +12,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.data.provider.ListDataProvider
 import com.vaadin.flow.dom.Style
 import com.vaadin.flow.router.Route
-import de.akvsoft.cashflow.backend.database.Entry
 import de.akvsoft.cashflow.backend.database.EntryType
 import de.akvsoft.cashflow.backend.database.toDisplayString
 import de.akvsoft.cashflow.frontend.components.button
@@ -31,7 +30,6 @@ import de.akvsoft.cashflow.frontend.util.formatCurrency
 import de.akvsoft.cashflow.frontend.util.formatDate
 import java.math.BigDecimal
 import java.time.LocalDate
-import java.time.YearMonth
 
 
 @Route("calculate")

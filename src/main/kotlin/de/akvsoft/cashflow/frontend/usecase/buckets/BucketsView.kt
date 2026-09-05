@@ -1,5 +1,6 @@
 package de.akvsoft.cashflow.frontend.usecase.buckets
 
+import com.vaadin.flow.component.Text
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog
@@ -19,7 +20,6 @@ import com.vaadin.flow.dom.Style
 import com.vaadin.flow.router.Route
 import de.akvsoft.cashflow.backend.database.Bucket
 import de.akvsoft.cashflow.backend.database.BucketTransaction
-import de.akvsoft.cashflow.backend.database.toDisplayString
 import de.akvsoft.cashflow.frontend.components.button
 import de.akvsoft.cashflow.frontend.components.div
 import de.akvsoft.cashflow.frontend.components.grid
@@ -42,7 +42,8 @@ class BucketsView(
     private val transactionGrid: Grid<BucketTransaction>
     private val bucketProvider = ListDataProvider<BucketSummary>(mutableListOf())
     private val transactionProvider = ListDataProvider<BucketTransaction>(mutableListOf())
-    private val availableBalanceText: Span
+    private val availableBalanceText: Text
+    private val reservesText: Text
     private val addButton: Button
     private val removeButton: Button
     private val revertButton: Button
@@ -56,138 +57,155 @@ class BucketsView(
         div {
             setWidthFull()
             addClassNames("alert", "info")
-            span {
-                text("Verfügbarer Saldo per ${LocalDate.now().formatDate()}:")
-                style.setFontWeight(Style.FontWeight.BOLD)
-            }
-            availableBalanceText = span {
-                style.setFontSize("1.25em")
-            }
-        }
-
-        verticalLayout {
-            isPadding = false
-            style.setGap("0")
-
+            style.set("flex-direction", "column")
+            style.set("align-items", "stretch")
             horizontalLayout {
-                alignItems = FlexComponent.Alignment.CENTER
-                justifyContentMode = FlexComponent.JustifyContentMode.END
                 setWidthFull()
-
-                deleteButton = button("Löschen") {
-                    isEnabled = false
-                    addThemeVariants(ButtonVariant.LUMO_ERROR)
-                    style.setMarginInlineEnd("auto")
-                    addClickListener { confirmDeleteBucket() }
+                justifyContentMode = FlexComponent.JustifyContentMode.BETWEEN
+                span {
+                    text("Verfügbarer Saldo per ${LocalDate.now().formatDate()}:")
+                    style.setFontWeight(Style.FontWeight.BOLD)
                 }
-                button("Erstellen") {
-                    addClickListener {
-                        BucketNameDialog { name ->
-                            runAction {
-                                service.createBucket(name)
-                                reload()
-                            }
-                        }.open()
-                    }
+                span {
+                    availableBalanceText = text(BigDecimal.ZERO.formatCurrency())
+                    style.setFontSize("1.25em")
                 }
             }
-
-            bucketGrid = grid<BucketSummary> {
-                emptyStateText = "Keine Rücklagen vorhanden"
-                setWidthFull()
-                height = "12em"
-                addThemeVariants(GridVariant.LUMO_ROW_STRIPES)
-
-                textColumn({ it.bucket.name }) {
-                    setHeader("Rücklage")
-                    flexGrow = 1
-                }
-                textColumn({ it.balance.formatCurrency() }) {
-                    setHeader("Saldo")
-                    width = "140px"
-                    flexGrow = 0
-                    setPartNameGenerator {
-                        listOfNotNull("align-end", if (it.balance < BigDecimal.ZERO) "negative" else null)
-                            .joinToString(" ")
-                    }
-                }
-
-                addSelectionListener { reloadTransactions() }
-                setItems(bucketProvider)
-            }
-        }
-
-        val transactionLayout = verticalLayout {
-            isPadding = false
-            style.setGap("0")
-
             horizontalLayout {
-                alignItems = FlexComponent.Alignment.CENTER
-                justifyContentMode = FlexComponent.JustifyContentMode.END
                 setWidthFull()
-
-                revertButton = button("Rückgängig") {
-                    isEnabled = false
-                    addThemeVariants(ButtonVariant.LUMO_ERROR)
-                    style.setMarginInlineEnd("auto")
-                    addClickListener { confirmRevertTransaction() }
+                justifyContentMode = FlexComponent.JustifyContentMode.BETWEEN
+                span {
+                    text("Rücklagen:")
+                    style.setFontWeight(Style.FontWeight.BOLD)
                 }
-                addButton = button("Parken") {
-                    isEnabled = false
-                    addClickListener {
-                        val bucket = selectedBucket() ?: return@addClickListener
-                        MoneyDialog("Parken") { date, amount ->
-                            runAction {
-                                service.addMoney(bucket, date, amount)
-                                reload()
-                            }
-                        }.open()
-                    }
+                span {
+                    reservesText = text(BigDecimal.ZERO.formatCurrency())
+                    style.setFontSize("1.25em")
                 }
-                removeButton = button("Entparken") {
-                    isEnabled = false
-                    addClickListener {
-                        val bucket = selectedBucket() ?: return@addClickListener
-                        MoneyDialog("Entparken") { date, amount ->
-                            runAction {
-                                service.removeMoney(bucket, date, amount)
-                                reload()
-                            }
-                        }.open()
-                    }
-                }
-            }
-
-            transactionGrid = grid<BucketTransaction> {
-                emptyStateText = "Keine Transaktionen vorhanden"
-                setWidthFull()
-                addThemeVariants(GridVariant.LUMO_ROW_STRIPES)
-
-                textColumn({ it.date.formatDate() }) {
-                    setHeader("Datum")
-                    width = "130px"
-                    flexGrow = 0
-                }
-                textColumn({ it.amount.formatCurrency() }) {
-                    setHeader("Betrag")
-                    width = "140px"
-                    flexGrow = 0
-                    setPartNameGenerator {
-                        listOfNotNull("align-end", if (it.amount < BigDecimal.ZERO) "negative" else null)
-                            .joinToString(" ")
-                    }
-                }
-                textColumn({ it.type.toDisplayString() }) {
-                    setHeader("Typ")
-                    width = "120px"
-                    flexGrow = 0
-                }
-
-                addSelectionListener { updateActionButtons() }
-                setItems(transactionProvider)
             }
         }
-        setFlexGrow(2.0, transactionLayout)
+
+        horizontalLayout {
+            setSizeFull()
+
+            verticalLayout {
+                isPadding = false
+                style.setGap("0")
+
+                horizontalLayout {
+                    alignItems = FlexComponent.Alignment.CENTER
+                    justifyContentMode = FlexComponent.JustifyContentMode.END
+                    setWidthFull()
+
+                    deleteButton = button("Löschen") {
+                        isEnabled = false
+                        addThemeVariants(ButtonVariant.LUMO_ERROR)
+                        style.setMarginInlineEnd("auto")
+                        addClickListener { confirmDeleteBucket() }
+                    }
+                    button("Erstellen") {
+                        addClickListener {
+                            BucketNameDialog { name ->
+                                runAction {
+                                    service.createBucket(name)
+                                    reload()
+                                }
+                            }.open()
+                        }
+                    }
+                }
+
+                bucketGrid = grid {
+                    emptyStateText = "Keine Rücklagen vorhanden"
+                    setWidthFull()
+                    height = "12em"
+                    addThemeVariants(GridVariant.LUMO_ROW_STRIPES)
+
+                    textColumn({ it.bucket.name }) {
+                        setHeader("Rücklage")
+                        flexGrow = 1
+                    }
+                    textColumn({ it.balance.formatCurrency() }) {
+                        setHeader("Saldo")
+                        width = "140px"
+                        flexGrow = 0
+                        setPartNameGenerator {
+                            listOfNotNull("align-end", if (it.balance < BigDecimal.ZERO) "negative" else null)
+                                .joinToString(" ")
+                        }
+                    }
+
+                    addSelectionListener { reloadTransactions() }
+                    setItems(bucketProvider)
+                }
+            }
+
+            verticalLayout {
+                isPadding = false
+                style.setGap("0")
+
+                horizontalLayout {
+                    alignItems = FlexComponent.Alignment.CENTER
+                    justifyContentMode = FlexComponent.JustifyContentMode.END
+                    setWidthFull()
+
+                    revertButton = button("Rückgängig") {
+                        isEnabled = false
+                        addThemeVariants(ButtonVariant.LUMO_ERROR)
+                        style.setMarginInlineEnd("auto")
+                        addClickListener { confirmRevertTransaction() }
+                    }
+                    addButton = button("Parken") {
+                        isEnabled = false
+                        addClickListener {
+                            val bucket = selectedBucket() ?: return@addClickListener
+                            MoneyDialog("Parken") { date, amount ->
+                                runAction {
+                                    service.addMoney(bucket, date, amount)
+                                    reload()
+                                }
+                            }.open()
+                        }
+                    }
+                    removeButton = button("Entparken") {
+                        isEnabled = false
+                        addClickListener {
+                            val bucket = selectedBucket() ?: return@addClickListener
+                            MoneyDialog("Entparken") { date, amount ->
+                                runAction {
+                                    service.removeMoney(bucket, date, amount)
+                                    reload()
+                                }
+                            }.open()
+                        }
+                    }
+                }
+
+                transactionGrid = grid {
+                    emptyStateText = "Keine Transaktionen vorhanden"
+                    setWidthFull()
+                    addThemeVariants(GridVariant.LUMO_ROW_STRIPES)
+
+                    textColumn({ it.date.formatDate() }) {
+                        setHeader("Datum")
+                        width = "130px"
+                        flexGrow = 1
+                    }
+                    textColumn({ it.amount.formatCurrency() }) {
+                        setHeader("Betrag")
+                        width = "140px"
+                        flexGrow = 0
+                        setPartNameGenerator {
+                            listOfNotNull("align-end", if (it.amount < BigDecimal.ZERO) "negative" else null)
+                                .joinToString(" ")
+                        }
+                    }
+
+                    addSelectionListener { updateActionButtons() }
+                    setItems(transactionProvider)
+                }
+            }
+        }
 
         reload()
     }
@@ -198,6 +216,7 @@ class BucketsView(
         bucketProvider.items.addAll(service.findAll())
         bucketProvider.refreshAll()
         availableBalanceText.text = service.availableBalance().formatCurrency()
+        reservesText.text = service.totalBalance().formatCurrency()
 
         selectedId
             ?.let { id -> bucketProvider.items.firstOrNull { it.bucket.id == id } }
