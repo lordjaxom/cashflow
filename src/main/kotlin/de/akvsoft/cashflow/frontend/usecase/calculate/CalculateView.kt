@@ -145,7 +145,12 @@ class CalculateView(
                     addClickListener { confirmSquash() }
                 }
                 button("Hinzufügen") {
-                    addClickListener { EntryDialog { entry -> service.saveEntry(entry) }.open(service.createEntry()) }
+                    addClickListener {
+                        EntryDialog { entry ->
+                            service.saveEntry(entry)
+                            calculate()
+                        }.open(service.createEntry())
+                    }
                 }
             }
             grid = grid<Row> {
